@@ -1,0 +1,57 @@
+# -----------------------------
+# Unity用
+# -----------------------------
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+*.csproj
+*.unityproj
+*.sln
+*.user
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.DS_Store
+*.apk
+*.unitypackage
+*.vscode/
+.vscode/
+
+# -----------------------------
+# Python用（必要なら）
+# -----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.log
+*.pot
+*.mo
+*.egg-info/
+dist/
+build/
+venv/
+
+# -----------------------------
+# 点群データの除外
+# -----------------------------
+Tili_distribute/Original_ply/
+Tili_distribute/Split/
+Tilibase_Streaming/Download_ply/
+
+# -----------------------------
+# その他
+# -----------------------------
+# OSごとの不要ファイル
+.DS_Store
+Thumbs.db
+ehthumbs.db
