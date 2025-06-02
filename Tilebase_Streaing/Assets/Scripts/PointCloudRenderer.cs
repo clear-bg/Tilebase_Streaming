@@ -7,7 +7,7 @@ namespace Pcx
 {
     public class PointCloudRenderer : MonoBehaviour
     {
-        public int cloudId; // このRendererの点群ID
+        public int tileID; // このRendererの点群ID
         public MeshFilter meshFilter;
 
         private void Awake()
@@ -25,12 +25,12 @@ namespace Pcx
         {
             while (true)
             {
-                if (Download.renderQueues[cloudId].TryDequeue(out var item))
+                if (Download.renderQueues[tileID].TryDequeue(out var item))
                 {
                     (byte[] data, int index) = item;
                     var mesh = ImportMeshFromData(data, index); // 修正
                     meshFilter.sharedMesh = mesh;
-                    Debug.Log($"[Renderer {cloudId}] Frame {index} rendered.");
+                    Debug.Log($"[Renderer {tileID}] Frame {index} rendered.");
                 }
                 yield return new WaitForSeconds(0.033f); // 30fps相当
             }

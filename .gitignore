@@ -44,9 +44,7 @@ venv/
 # -----------------------------
 # 点群データの除外
 # -----------------------------
-Tili_distribute/Original_ply/
-Tili_distribute/Split/
-Tilibase_Streaming/Download_ply/
+*.ply
 
 # -----------------------------
 # その他

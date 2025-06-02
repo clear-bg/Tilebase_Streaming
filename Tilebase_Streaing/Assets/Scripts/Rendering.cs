@@ -9,7 +9,7 @@ namespace Pcx
 {
     public class Rendering : MonoBehaviour
     {
-        public int cloudId; // このRendererが担当する点群ID
+        public int tileID; // このRendererが担当する点群ID（数値型）
         public MeshFilter meshFilter;
         private const float renderInterval = 0.033f; // 30fps相当
 
@@ -33,7 +33,7 @@ namespace Pcx
             {
                 if (Time.realtimeSinceStartup >= nextRenderTime)
                 {
-                    if (Download.renderQueues[cloudId].TryDequeue(out var item))
+                    if (Download.renderQueues[tileID].TryDequeue(out var item))
                     {
                         (byte[] data, int frameIndex) = item;
                         yield return StartCoroutine(RenderFile(data, frameIndex));
@@ -46,10 +46,10 @@ namespace Pcx
 
         IEnumerator RenderFile(byte[] data, int frameIndex)
         {
-            Debug.Log($"[Rendering Start] Cloud: {cloudId}, Frame: {frameIndex}, Time: {Time.time}");
+            Debug.Log($"[Rendering Start] Tile: {tileID}, Frame: {frameIndex}, Time: {Time.time}");
             var mesh = ImportMeshFromData(data, frameIndex);
             meshFilter.sharedMesh = mesh;
-            Debug.Log($"[Rendering Complete] Cloud: {cloudId}, Frame: {frameIndex}, Time: {Time.time}");
+            Debug.Log($"[Rendering Complete] Tile: {tileID}, Frame: {frameIndex}, Time: {Time.time}");
             yield break;
         }
 
@@ -59,12 +59,7 @@ namespace Pcx
             var reader = new StreamReader(stream);
             var binReader = new BinaryReader(stream);
             
-            // 簡略版の例として空のMeshを作成
-            Mesh mesh = new Mesh
-            {
-                name = index.ToString()
-            };
-            // 実際にはここで点群データを読み込み、mesh.SetVerticesやSetColorsを設定します
+            Mesh mesh = new Mesh { name = index.ToString() };
             return mesh;
         }
     }

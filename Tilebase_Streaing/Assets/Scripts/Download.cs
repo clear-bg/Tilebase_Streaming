@@ -17,56 +17,46 @@ namespace Pcx
 {
     public class Download : MonoBehaviour
     {
-        public static ConcurrentQueue<(byte[], int, int)> renderQueue = new ConcurrentQueue<(byte[], int, int)>();
-        public string baseUrl = "http://localhost:8000/get_file"; // サーバURL
+        public static ConcurrentQueue<(byte[], int)>[] renderQueues;
+        public string baseUrl = "http://172.16.51.65:8000/get_file"; // サーバURL
         public int totalFrames = 300; // 総フレーム数
-        public int numClouds = 4; // 点群の数（PointCloudRendererの数）
+        public int numTiles = 12; // タイル数
 
         private int downloadIndex = 0;
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-        private bool initialBufferFilled = false;
-        public int initialBufferSize = 30;
-        public static event Action OnBufferReady;
-
         void Start()
         {
-            for (int i = 0; i < numClouds; i++)
+            renderQueues = new ConcurrentQueue<(byte[], int)>[numTiles];
+            for (int i = 0; i < numTiles; i++)
             {
                 renderQueues[i] = new ConcurrentQueue<(byte[], int)>();
             }
             StartCoroutine(DownloadLoop());
         }
 
-        public static ConcurrentQueue<(byte[], int)>[] renderQueues;
-
         IEnumerator DownloadLoop()
         {
-            renderQueues = new ConcurrentQueue<(byte[], int)>[numClouds];
-            for (int i = 0; i < numClouds; i++)
-            {
-                renderQueues[i] = new ConcurrentQueue<(byte[], int)>();
-            }
-
             while (downloadIndex < totalFrames)
             {
-                for (int cloudId = 0; cloudId < numClouds; cloudId++)
+                var currentTileIDs = GetCurrentTileIDs();
+                foreach (int tileID in currentTileIDs)
                 {
-                    string url = $"{baseUrl}/{cloudId}/{downloadIndex}";
-                    yield return DownloadAndEnqueue(url, cloudId, downloadIndex);
+                    string url = $"{baseUrl}/{tileID}/{downloadIndex}";
+                    yield return DownloadAndEnqueue(url, tileID, downloadIndex);
                 }
                 downloadIndex++;
-                if (!initialBufferFilled && CheckInitialBuffer())
-                {
-                    initialBufferFilled = true;
-                    OnBufferReady?.Invoke();
-                    Debug.Log("初期バッファ充填完了");
-                }
                 yield return null;
             }
         }
 
-        IEnumerator DownloadAndEnqueue(string url, int cloudId, int frameIndex)
+        int[] GetCurrentTileIDs()
+        {
+            // テスト用：固定で0, 2, 4, 6, 8, 10を選択
+            return new int[] { 0, 2, 4, 6, 8, 10 };
+        }
+
+        IEnumerator DownloadAndEnqueue(string url, int tileID, int frameIndex)
         {
             using (UnityWebRequest uwr = UnityWebRequest.Get(url))
             {
@@ -76,24 +66,14 @@ namespace Pcx
                 if (uwr.result == UnityWebRequest.Result.Success)
                 {
                     byte[] data = uwr.downloadHandler.data;
-                    renderQueues[cloudId].Enqueue((data, frameIndex));
-                    Debug.Log($"[Download] Enqueued Cloud {cloudId}, Frame {frameIndex}");
+                    renderQueues[tileID].Enqueue((data, frameIndex));
+                    Debug.Log($"[Download] Enqueued Tile {tileID}, Frame {frameIndex}");
                 }
                 else
                 {
-                    Debug.LogWarning($"[Download] Failed to download Cloud {cloudId}, Frame {frameIndex}: {uwr.error}");
+                    Debug.LogWarning($"[Download] Failed to download Tile {tileID}, Frame {frameIndex}: {uwr.error}");
                 }
             }
-        }
-
-        bool CheckInitialBuffer()
-        {
-            int totalBuffered = 0;
-            for (int i = 0; i < numClouds; i++)
-            {
-                totalBuffered += renderQueues[i].Count;
-            }
-            return totalBuffered >= initialBufferSize;
         }
 
         private void OnApplicationQuit()
