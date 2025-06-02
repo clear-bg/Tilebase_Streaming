@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 namespace Pcx
 {
@@ -8,7 +9,6 @@ namespace Pcx
     {
         public int cloudId; // このRendererの点群ID
         public MeshFilter meshFilter;
-        PlyImporter importer = new PlyImporter();
 
         private void Awake()
         {
@@ -17,35 +17,35 @@ namespace Pcx
 
             var meshRenderer = GetComponent<MeshRenderer>();
             if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
-            
-            meshRenderer.sharedMaterial = importer.GetDefaultMaterial();
-        }
 
+            meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
+        }
 
         IEnumerator Start()
         {
             while (true)
             {
-                if (Downloader.renderQueues[cloudId].TryDequeue(out var item))
+                if (Download.renderQueues[cloudId].TryDequeue(out var item))
                 {
                     (byte[] data, int index) = item;
-                    var mesh = importer.ImportAsMesh(data, index);
+                    var mesh = ImportMeshFromData(data, index); // 修正
                     meshFilter.sharedMesh = mesh;
                     Debug.Log($"[Renderer {cloudId}] Frame {index} rendered.");
                 }
                 yield return new WaitForSeconds(0.033f); // 30fps相当
             }
         }
+
+        private Mesh ImportMeshFromData(byte[] data, int index)
+        {
+            var stream = new MemoryStream(data);
+            var reader = new StreamReader(stream);
+            var binReader = new BinaryReader(stream);
+            
+            // 簡略版の例として空のMeshを作成
+            Mesh mesh = new Mesh { name = index.ToString() };
+            // 実際にはここで点群データを読み込み、mesh.SetVerticesやSetColorsを設定します
+            return mesh;
+        }
     }
-    // Start is called before the first frame update
-    // void Start()
-    // {
-
-    // }
-
-    // Update is called once per frame
-    // void Update()
-    // {
-
-    // }
 }

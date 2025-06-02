@@ -17,49 +17,56 @@ namespace Pcx
 {
     public class Download : MonoBehaviour
     {
-        public static ConcurrentDictionary<int, ConcurrentQueue<(byte[], int)>> renderQueues = new ConcurrentDictionary<int, ConcurrentQueue<(byte[], int)>>();
-        public string baseUrl = "http://yourserver.com/pointcloud"; // ベースURL(サーバIPアドレス)
+        public static ConcurrentQueue<(byte[], int, int)> renderQueue = new ConcurrentQueue<(byte[], int, int)>();
+        public string baseUrl = "http://localhost:8000/get_file"; // サーバURL
         public int totalFrames = 300; // 総フレーム数
-        private int downloadIndex = 0; // ダウンロード進行インデックス
-        public int numClouds = 4; // 点群の数（PointCloudRendererに対応）
+        public int numClouds = 4; // 点群の数（PointCloudRendererの数）
 
+        private int downloadIndex = 0;
         private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-        // Start is called before the first frame update
+        private bool initialBufferFilled = false;
+        public int initialBufferSize = 30;
+        public static event Action OnBufferReady;
+
         void Start()
         {
-            // 各点群用のキューを初期化
+            for (int i = 0; i < numClouds; i++)
+            {
+                renderQueues[i] = new ConcurrentQueue<(byte[], int)>();
+            }
+            StartCoroutine(DownloadLoop());
+        }
+
+        public static ConcurrentQueue<(byte[], int)>[] renderQueues;
+
+        IEnumerator DownloadLoop()
+        {
+            renderQueues = new ConcurrentQueue<(byte[], int)>[numClouds];
             for (int i = 0; i < numClouds; i++)
             {
                 renderQueues[i] = new ConcurrentQueue<(byte[], int)>();
             }
 
-            // ダウンロード開始
-            StartCoroutine(DownloadLoop());
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
-        }
-
-        IEnumerator DownloadLoop()
-        {
             while (downloadIndex < totalFrames)
             {
                 for (int cloudId = 0; cloudId < numClouds; cloudId++)
                 {
-                    string url = $"{baseUrl}/cloud{cloudId}/{downloadIndex}.ply";
-                    Debug.Log($"[Download] Requesting {url}");
+                    string url = $"{baseUrl}/{cloudId}/{downloadIndex}";
                     yield return DownloadAndEnqueue(url, cloudId, downloadIndex);
                 }
                 downloadIndex++;
+                if (!initialBufferFilled && CheckInitialBuffer())
+                {
+                    initialBufferFilled = true;
+                    OnBufferReady?.Invoke();
+                    Debug.Log("初期バッファ充填完了");
+                }
                 yield return null;
             }
         }
 
-        IEnumerator DownloadAndEnqueue(string url, int cloudId, int index)
+        IEnumerator DownloadAndEnqueue(string url, int cloudId, int frameIndex)
         {
             using (UnityWebRequest uwr = UnityWebRequest.Get(url))
             {
@@ -69,14 +76,24 @@ namespace Pcx
                 if (uwr.result == UnityWebRequest.Result.Success)
                 {
                     byte[] data = uwr.downloadHandler.data;
-                    renderQueues[cloudId].Enqueue((data, index));
-                    Debug.Log($"[Download] Enqueued Frame {index} for Cloud {cloudId}");
+                    renderQueues[cloudId].Enqueue((data, frameIndex));
+                    Debug.Log($"[Download] Enqueued Cloud {cloudId}, Frame {frameIndex}");
                 }
                 else
                 {
-                    Debug.LogWarning($"[Download] Failed to download {url}: {uwr.error}");
+                    Debug.LogWarning($"[Download] Failed to download Cloud {cloudId}, Frame {frameIndex}: {uwr.error}");
                 }
             }
+        }
+
+        bool CheckInitialBuffer()
+        {
+            int totalBuffered = 0;
+            for (int i = 0; i < numClouds; i++)
+            {
+                totalBuffered += renderQueues[i].Count;
+            }
+            return totalBuffered >= initialBufferSize;
         }
 
         private void OnApplicationQuit()
@@ -85,4 +102,3 @@ namespace Pcx
         }
     }
 }
-
