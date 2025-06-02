@@ -18,7 +18,10 @@ namespace Pcx
     public class Download : MonoBehaviour
     {
         public static ConcurrentQueue<(byte[], int)>[] renderQueues;
-        public string baseUrl = "http://172.16.51.65:8000/get_file"; // サーバURL
+        // public string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_有線
+        public string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_無線
+        // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
+        // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_無線
         public int totalFrames = 300; // 総フレーム数
         public int numTiles = 12; // タイル数
 
