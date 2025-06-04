@@ -1,40 +1,35 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
-using System.IO;
-
 using UnityEngine.Networking;
-using System.Xml.Linq;
-using System.Linq;
-using System.Threading;
 using System;
-using UnityEngine.UI;
 
 namespace Pcx
 {
     public class Download : MonoBehaviour
     {
         public static ConcurrentQueue<(byte[], int)>[] renderQueues;
-        // public string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_有線
-        public string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_無線
+
+        public string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線
+        // public string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_研究室_無線
+        // public string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_家_有線
         // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
         // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_無線
         public int totalFrames = 300; // 総フレーム数
-        public int numTiles = 12; // タイル数
+        public int numTiles = 12;     // タイル数
 
         private int downloadIndex = 0;
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         void Start()
         {
+            // 各タイルごとにキューを初期化
             renderQueues = new ConcurrentQueue<(byte[], int)>[numTiles];
             for (int i = 0; i < numTiles; i++)
             {
                 renderQueues[i] = new ConcurrentQueue<(byte[], int)>();
             }
+
             StartCoroutine(DownloadLoop());
         }
 
@@ -42,12 +37,14 @@ namespace Pcx
         {
             while (downloadIndex < totalFrames)
             {
-                var currentTileIDs = GetCurrentTileIDs();
+                int[] currentTileIDs = GetCurrentTileIDs();
+
                 foreach (int tileID in currentTileIDs)
                 {
                     string url = $"{baseUrl}/{tileID}/{downloadIndex}";
                     yield return DownloadAndEnqueue(url, tileID, downloadIndex);
                 }
+
                 downloadIndex++;
                 yield return null;
             }
@@ -55,7 +52,7 @@ namespace Pcx
 
         int[] GetCurrentTileIDs()
         {
-            // テスト用：固定で0, 2, 4, 6, 8, 10を選択
+            // テスト用：固定で 0, 2, 4, 6, 8, 10 を選択
             return new int[] { 0, 2, 4, 6, 8, 10 };
         }
 
@@ -74,14 +71,9 @@ namespace Pcx
                 }
                 else
                 {
-                    Debug.LogWarning($"[Download] Failed to download Tile {tileID}, Frame {frameIndex}: {uwr.error}");
+                    Debug.LogWarning($"[Download] Failed: Tile {tileID}, Frame {frameIndex}, Error: {uwr.error}");
                 }
             }
-        }
-
-        private void OnApplicationQuit()
-        {
-            cancellationTokenSource.Cancel();
         }
     }
 }

@@ -1,66 +1,49 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
-using System.IO;
 
 namespace Pcx
 {
     public class Rendering : MonoBehaviour
     {
-        public int tileID; // このRendererが担当する点群ID（数値型）
+        public int tileID; // この描画オブジェクトが担当するタイルID
         public MeshFilter meshFilter;
-        private const float renderInterval = 0.033f; // 30fps相当
 
-        void Start()
+        void Awake()
         {
-            QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = 120;
             meshFilter = GetComponent<MeshFilter>();
-            if (meshFilter == null) meshFilter = gameObject.AddComponent<MeshFilter>();
-            var meshRenderer = GetComponent<MeshRenderer>();
-            if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
-            meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
+            if (meshFilter == null)
+                meshFilter = gameObject.AddComponent<MeshFilter>();
 
-            StartCoroutine(RenderLoop());
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null)
+                meshRenderer = gameObject.AddComponent<MeshRenderer>();
+
+            meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
         }
 
-        IEnumerator RenderLoop()
+        IEnumerator Start()
         {
-            float nextRenderTime = Time.realtimeSinceStartup;
             while (true)
             {
-                if (Time.realtimeSinceStartup >= nextRenderTime)
+                if (Download.renderQueues[tileID].TryDequeue(out var item))
                 {
-                    if (Download.renderQueues[tileID].TryDequeue(out var item))
+                    (byte[] data, int frameIndex) = item;
+
+                    // ✅ PointCloudImporter を使用
+                    var mesh = PointCloudImporter.ImportAsMesh(data, frameIndex);
+                    if (mesh != null)
                     {
-                        (byte[] data, int frameIndex) = item;
-                        yield return StartCoroutine(RenderFile(data, frameIndex));
+                        meshFilter.sharedMesh = mesh;
+                        Debug.Log($"[Renderer {tileID}] Frame {frameIndex} rendered.");
                     }
-                    nextRenderTime += renderInterval;
+                    else
+                    {
+                        Debug.LogWarning($"[Renderer {tileID}] Failed to parse frame {frameIndex}");
+                    }
                 }
-                yield return new WaitForSeconds(renderInterval);
+
+                yield return new WaitForSeconds(0.033f); // 約30fps
             }
-        }
-
-        IEnumerator RenderFile(byte[] data, int frameIndex)
-        {
-            Debug.Log($"[Rendering Start] Tile: {tileID}, Frame: {frameIndex}, Time: {Time.time}");
-            var mesh = ImportMeshFromData(data, frameIndex);
-            meshFilter.sharedMesh = mesh;
-            Debug.Log($"[Rendering Complete] Tile: {tileID}, Frame: {frameIndex}, Time: {Time.time}");
-            yield break;
-        }
-
-        private Mesh ImportMeshFromData(byte[] data, int index)
-        {
-            var stream = new MemoryStream(data);
-            var reader = new StreamReader(stream);
-            var binReader = new BinaryReader(stream);
-            
-            Mesh mesh = new Mesh { name = index.ToString() };
-            return mesh;
         }
     }
 }
