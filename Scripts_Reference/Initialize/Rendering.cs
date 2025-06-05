@@ -44,7 +44,7 @@ namespace Pcx
           continue;
         }
 
-        if (!Downloader.renderQueue.TryDequeue(out var item))
+        if (!Download.renderQueue.TryDequeue(out var item))
         {
           yield break; // キューが空なら何もせず抜ける
         }
