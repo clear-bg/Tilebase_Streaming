@@ -19,7 +19,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'get_file'))
 @app.get("/get_file/{index}.ply")
 async def get_file(index: int):
     file_path = os.path.join(BASE_DIR, f"{index}.ply")
-    
+
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
 

@@ -10,20 +10,21 @@ Streming/
 │   │   ├── 001/
 │   │   ├── ...
 │   │   └── 299/
+│   ├── app.py
 │   ├── app_multipart.py
 │   └── app_single_response.py
-├── Tili_distribute/
+├── Tile_distribute/
 │   ├── Original_ply/
 │   │   ├── 0.ply
 │   │   ├── 1.ply
 │   │   ├── ...
 │   │   └── 299.ply
 │   └── split_ply.py
-├── Tilibase_Streaming/ (Unityプロジェクト)
+├── Tilebase_Streaming/ (Unityプロジェクト)
 │   ├── Assets/
 │   │   └── Scripts/
 │   │       ├── Download.cs
 │   │       └── Rendering.cs
 │   ├── Download_ply/
 │   └── Pcx/
-└── ディレクトリ構造.txt
+└── directory.txt

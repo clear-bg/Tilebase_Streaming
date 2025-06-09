@@ -1,49 +1,80 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace Pcx
 {
     public class Rendering : MonoBehaviour
     {
-        public int tileID; // この描画オブジェクトが担当するタイルID
-        public MeshFilter meshFilter;
+        public MeshFilter meshFilter; // レンダリング対象の MeshFilter
+        PlyImporter importer = new PlyImporter();
+        MeshRenderer meshRenderer;
+        private bool canRender = false; // レンダリング可能フラグ
 
-        void Awake()
+        private const float renderInterval = 1.0f / 30.0f; // レンダリング間隔 (秒)
+        void Start()
         {
-            meshFilter = GetComponent<MeshFilter>();
-            if (meshFilter == null)
-                meshFilter = gameObject.AddComponent<MeshFilter>();
+            QualitySettings.vSyncCount = 0; // VSyncを無効化
+            Application.targetFrameRate = 120; // 最大フレームレートを120FPSに設定
+            meshFilter = gameObject.AddComponent<MeshFilter>();
+            meshRenderer = gameObject.AddComponent<MeshRenderer>();
+            meshRenderer.sharedMaterial = importer.GetDefaultMaterial();
 
-            var meshRenderer = GetComponent<MeshRenderer>();
-            if (meshRenderer == null)
-                meshRenderer = gameObject.AddComponent<MeshRenderer>();
-
-            meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
+            // 初期バッファ充填完了を受け取る
+            Download.OnBufferReady += EnableRendering;
+            StartCoroutine(RenderLoop());
         }
 
-        IEnumerator Start()
+        void EnableRendering()
         {
+            canRender = true;
+        }
+
+        IEnumerator RenderLoop()
+        {
+            float nextRenderTime = Time.realtimeSinceStartup;
             while (true)
             {
-                if (Download.renderQueues[tileID].TryDequeue(out var item))
+                if (!canRender)
                 {
-                    (byte[] data, int frameIndex) = item;
-
-                    // ✅ PointCloudImporter を使用
-                    var mesh = PointCloudImporter.ImportAsMesh(data, frameIndex);
-                    if (mesh != null)
-                    {
-                        meshFilter.sharedMesh = mesh;
-                        Debug.Log($"[Renderer {tileID}] Frame {frameIndex} rendered.");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[Renderer {tileID}] Failed to parse frame {frameIndex}");
-                    }
+                    yield return null; // 初期バッファが満たされるまで待機
+                    continue;
                 }
 
-                yield return new WaitForSeconds(0.033f); // 約30fps
+                if (!Download.renderQueue.TryDequeue(out var item))
+                {
+                    yield break; // キューが空なら何もせず抜ける
+                }
+
+                (byte[] data, int downloadIndex) = item;
+
+                if (downloadIndex < 0)
+                {
+                    yield break; // 無効なインデックスはスキップ
+                }
+
+                yield return StartCoroutine(RenderFile(data, downloadIndex)); // レンダリング処理
+                nextRenderTime += renderInterval;
+
+                yield return new WaitForSeconds(renderInterval); // レンダリング間隔を設定
             }
+        }
+
+        IEnumerator RenderFile(byte[] data, int downloadIndex)
+        {
+            if (false)
+            {
+                yield break;
+            }
+
+            Debug.Log($"[Rendering Start] File: {downloadIndex}, Time: {Time.time}");
+            var mesh = importer.ImportAsMesh(data, downloadIndex); // ファイルをメッシュに変換
+            meshFilter.sharedMesh = mesh;
+            Debug.Log($"[Rendering Complete] File: {downloadIndex}, Time: {Time.time}");
+
         }
     }
 }
