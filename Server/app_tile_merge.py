@@ -15,7 +15,7 @@ from Server.merge_ply import merge_ply_files
 app = FastAPI()
 
 # get_file フォルダの絶対パスを構成（Scripts_Reference から見て ../get_file）
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'get_file'))
+# BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'get_file'))
 
 # インデックス→x, y, z変換表（0〜11）
 index2xyz = [
@@ -50,6 +50,6 @@ def get_tile_file_paths(frame: int, tile_index):
     file_list = []
     for idx in tile_index:
         xi, yi, zi = index2xyz[idx]
-        path = os.path.join(BASE_DIR, frame_str, f"{frame_str}_tile_{xi}_{yi}_{zi}.ply")
+        path = os.path.join('get_file', frame_str, f"{frame_str}_tile_{xi}_{yi}_{zi}.ply")
         file_list.append(path)
     return file_list

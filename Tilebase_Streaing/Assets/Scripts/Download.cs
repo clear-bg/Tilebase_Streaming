@@ -39,6 +39,7 @@ public class Download : MonoBehaviour
 
             string url = $"{baseUrl}?frame={downloadIndex}&tiles={tileParam}";
             // string path = GetFilePath(downloadIndex);
+            Debug.Log($"Request url: {url}");
 
             UnityWebRequest uwr = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET);
             uwr.downloadHandler = new DownloadHandlerBuffer();
