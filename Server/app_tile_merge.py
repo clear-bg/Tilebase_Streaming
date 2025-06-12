@@ -1,18 +1,30 @@
 r'''
-uvicorn Server.app_tile_merge:app --host 0.0.0.0 --port 8000 --reload
-
+サーバ起動は必ず Streming/Server ディレクトリから行う
 uvicorn app_tile_merge:app --host 0.0.0.0 --port 8000 --reload
 
 C:\Users\clear\AppData\Roaming\Python\Python310\Scripts\uvicorn.exe Initialize.app:app --host 0.0.0.0 --port 8000 --reload
 '''
 
+import os
+import time
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-import os
 
-from Server.merge_ply import merge_ply_files
+from merge_ply import merge_ply_files
 
 app = FastAPI()
+
+LOG_PATH = os.path.join(os.path.dirname(__file__), "merge_log.csv")
+
+def log_merge_time(frame, start, end):
+    elapsed = (end - start) * 1000
+    start_ms = start * 1000
+    end_ms = end * 1000
+    file_exists = os.path.exists(LOG_PATH)
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        if not file_exists:
+            f.write("Frame,MergeStartTime(ms),MergeEndTime(ms),Elapsed(ms)\n")
+        f.write(f"{frame},{start_ms:.3f},{end_ms:.3f},{elapsed:.3f}\n")
 
 # get_file フォルダの絶対パスを構成（Scripts_Reference から見て ../get_file）
 # BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'get_file'))
@@ -33,11 +45,16 @@ async def get_file(frame: int, tiles: str):
 
     file_list = get_tile_file_paths(frame, tile_index)
 
+    start = time.time()  # マージ開始時刻
+
     # merge_ply.pyの関数を呼び出し
     try:
         merged_path = merge_ply_files(file_list, frame)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+    end = time.time()    # マージ終了時刻
+    log_merge_time(frame, start, end)
 
     return FileResponse(
         merged_path,

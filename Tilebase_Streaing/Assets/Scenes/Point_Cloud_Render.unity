@@ -349,8 +349,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseUrl: http://172.16.51.65:8000/get_file
-  initialBufferSize: 30
-  totalFrames: 60
+  initialBufferSize: 1
+  totalFrames: 300
 --- !u!1 &1370103795
 GameObject:
   m_ObjectHideFlags: 0
