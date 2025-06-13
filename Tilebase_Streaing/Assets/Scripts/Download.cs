@@ -7,12 +7,13 @@ using System.Diagnostics;
 
 public class Download : MonoBehaviour
 {
-
-    public string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線
-    // public string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_研究室_無線
-    // public string baseUrl = "http://192.168.1.18:8000/get_file"; // デスクトップ_家_有線
-    // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
-    // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_無線
+    private bool doTileDistribute = true;  // タイル分割/結合をするか決定
+    private string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線_タイル分割あり
+    // private string baseUrl = "http://172.16.51.65:8000/merge_ply"; // デスクトップ_研究室_有線_タイル分割なし
+    // private string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_研究室_無線
+    // private string baseUrl = "http://192.168.1.18:8000/get_file"; // デスクトップ_家_有線
+    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
+    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_無線
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
@@ -36,12 +37,18 @@ public class Download : MonoBehaviour
     {
         while (downloadIndex < totalFrames)
         {
-            List<int> tileIndex = GetRequestTileIndex(downloadIndex);
-            string tileParam = string.Join(",", tileIndex);
-
-            string url = $"{baseUrl}?frame={downloadIndex}&tiles={tileParam}";
-            // string path = GetFilePath(downloadIndex);
-            // Debug.Log($"Request url: {url}");
+            string url;
+            if (doTileDistribute)
+            {
+                List<int> tileIndex = GetRequestTileIndex(downloadIndex);
+                string tileParam = string.Join(",", tileIndex);
+                url = $"{baseUrl}?frame={downloadIndex}&tiles={tileParam}";
+            }
+            else
+            {
+                // baseUrlは「http://xxx/merge_ply」でコメントアウト等で切替
+                url = $"{baseUrl}?frame={downloadIndex}";
+            }
 
             UnityWebRequest uwr = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET);
             uwr.downloadHandler = new DownloadHandlerBuffer();
@@ -59,7 +66,7 @@ public class Download : MonoBehaviour
             }
             else
             {
-                UnityEngine.Debug.LogError($"[Download Error] File: {downloadIndex}, Error: {uwr.error}");
+                UnityEngine.Debug.LogError($"[Download Error URL] {url}\n[Download Error] File: {downloadIndex}, Error: {uwr.error}");
             }
 
             downloadIndex++;
@@ -82,7 +89,7 @@ public class Download : MonoBehaviour
     private List<int> GetRequestTileIndex(int frame)
     {
         // アルゴリズムは後で追加，とりあえず固定のタイル番号をリクエスト
-        return new List<int> { 2, 3, 4, 5, 8, 9, 10, 11 };
+        return new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     }
 
 }

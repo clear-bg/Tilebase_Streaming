@@ -10,12 +10,11 @@ using System.Collections.Concurrent;
 public class Download : MonoBehaviour
 {
 
-    // public string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線
-    public string baseUrl = "http://172.16.51.65:8000/get_merged"; // マージした点群ファイルにアクセス
-    // public string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_研究室_無線
-    // public string baseUrl = "http://192.168.1.18:8000/get_file"; // デスクトップ_家_有線
-    // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
-    // public string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_無線
+    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線
+    private string baseUrl = "http://172.16.51.65:8000/get_merged"; // マージした点群ファイルにアクセス
+    // private string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_研究室_無線
+    // private string baseUrl = "http://192.168.1.18:8000/get_file"; // デスクトップ_家_有線
+    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
     public static ConcurrentQueue<(byte[], int)> renderQueue = new ConcurrentQueue<(byte[], int)>();
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
@@ -51,7 +50,7 @@ public class Download : MonoBehaviour
             }
             else
             {
-                Debug.LogError($"[Download Error] File: {downloadIndex}, Error: {uwr.error}");
+                Debug.LogError($"[Download Error URL] {url}\n[Download Error] File: {downloadIndex}, Error: {uwr.error}");
             }
 
             downloadIndex++;

@@ -1,6 +1,6 @@
 r'''
 サーバの起動は必ず Streming/Initialize ディレクトリから行うこと
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app_Ini:app --host 0.0.0.0 --port 8000 --reload
 
 C:\Users\clear\AppData\Roaming\Python\Python310\Scripts\uvicorn.exe Initialize.app:app --host 0.0.0.0 --port 8000 --reload
 '''

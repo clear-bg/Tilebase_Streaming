@@ -76,5 +76,12 @@ namespace Pcx
             Debug.Log($"[Rendering Complete] File: {downloadIndex}, Time: {Time.time}");
 
         }
+
+        void OnApplicationQuit() { }
+        void OnDisable()
+        {
+            Download.OnBufferReady -= EnableRendering;
+            Download.renderQueue = new System.Collections.Concurrent.ConcurrentQueue<(byte[], int)>();
+        }
     }
 }

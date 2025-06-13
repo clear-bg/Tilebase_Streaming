@@ -16,25 +16,13 @@ app = FastAPI()
 
 LOG_PATH = os.path.join(os.path.dirname(__file__), "merge_log.csv")
 
-def log_merge_time(frame, start, end):
-    elapsed = (end - start) * 1000
-    start_ms = start * 1000
-    end_ms = end * 1000
-    file_exists = os.path.exists(LOG_PATH)
-    with open(LOG_PATH, "a", encoding="utf-8") as f:
-        if not file_exists:
-            f.write("Frame,MergeStartTime(ms),MergeEndTime(ms),Elapsed(ms)\n")
-        f.write(f"{frame},{start_ms:.3f},{end_ms:.3f},{elapsed:.3f}\n")
-
-# get_file フォルダの絶対パスを構成（Scripts_Reference から見て ../get_file）
-# BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), 'get_file'))
-
 # インデックス→x, y, z変換表（0〜11）
 index2xyz = [
     (0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1),
     (0, 2, 0), (0, 2, 1),
     (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1), (1, 2, 0), (1, 2, 1)
 ]
+
 
 @app.get("/get_file")
 async def get_file(frame: int, tiles: str):
@@ -62,6 +50,24 @@ async def get_file(frame: int, tiles: str):
         filename=f"{frame:03d}_merged.ply"
     )
 
+
+@app.get("/merge_ply")
+async def merge_ply(frame: int):
+    # merge_ply/000_merged.ply の形式でファイルパスを作る
+    frame_str = f"{frame:03d}"
+    merged_dir = os.path.join(os.path.dirname(__file__), "merge_ply")
+    merged_path = os.path.join(merged_dir, f"{frame_str}_merged.ply")
+
+    if not os.path.exists(merged_path):
+        raise HTTPException(status_code=404, detail="Merged file not found")
+
+    return FileResponse(
+        merged_path,
+        media_type="application/octet-stream",
+        filename=f"{frame_str}_merged.ply"
+    )
+
+
 def get_tile_file_paths(frame: int, tile_index):
     frame_str = f"{frame:03d}"
     file_list = []
@@ -70,3 +76,13 @@ def get_tile_file_paths(frame: int, tile_index):
         path = os.path.join('get_file', frame_str, f"{frame_str}_tile_{xi}_{yi}_{zi}.ply")
         file_list.append(path)
     return file_list
+
+def log_merge_time(frame, start, end):
+    elapsed = (end - start) * 1000
+    start_ms = start * 1000
+    end_ms = end * 1000
+    file_exists = os.path.exists(LOG_PATH)
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        if not file_exists:
+            f.write("Frame,MergeStartTime(ms),MergeEndTime(ms),Elapsed(ms)\n")
+        f.write(f"{frame},{start_ms:.3f},{end_ms:.3f},{elapsed:.3f}\n")

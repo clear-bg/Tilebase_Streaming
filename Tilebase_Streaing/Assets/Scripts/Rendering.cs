@@ -13,7 +13,7 @@ namespace Pcx
         PlyImporter importer = new PlyImporter();
         MeshRenderer meshRenderer;
         private bool canRender = false; // レンダリング可能フラグ
-        private const float renderInterval = 0.01f; // 30fps
+        private const float renderInterval = 0.01f;
 
         private List<(int frame, double downloadedMs, double renderedMs, double intervalMs)> logs = new List<(int, double, double, double)>();
 
@@ -101,6 +101,8 @@ namespace Pcx
         }
         void OnDisable()
         {
+            Download.OnBufferReady -= EnableRendering;
+            Download.renderQueue = new System.Collections.Concurrent.ConcurrentQueue<(byte[], int, double)>();
             ExportLogToCSV();
         }
 

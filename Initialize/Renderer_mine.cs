@@ -10,7 +10,7 @@ namespace Pcx{
     public class Renderer : MonoBehaviour
     {
         public MeshFilter meshFilter; // レンダリング対象の MeshFilter
-        
+
         PlyImporter importer = new PlyImporter();
         MeshRenderer meshRenderer;
         private bool canRender = false; // レンダリング可能フラグ
@@ -19,8 +19,8 @@ namespace Pcx{
         private List<float> renderIntervalTimes = new List<float>(); // レンダリング間隔を格納するリスト
         private float lastRenderTime = -1f; // 前回の描画時間
         private List<float> fpsRecords = new List<float>(); // フレーム間隔リスト
-        
-        
+
+
         void Start()
         {
             QualitySettings.vSyncCount = 0; // VSyncを無効化
@@ -28,8 +28,8 @@ namespace Pcx{
             meshFilter = gameObject.AddComponent<MeshFilter>();
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = importer.GetDefaultMaterial(); 
-            
-       
+
+
             // 初期バッファ充填完了を受け取る
             Downloader.OnBufferReady += EnableRendering;
             // StartCoroutine(RenderLoop());
@@ -44,19 +44,19 @@ namespace Pcx{
 
         IEnumerator RenderLoop()
         {
-            
+
             float nextFrameTime = Time.realtimeSinceStartup + renderInterval;
-            
+
             while (true)
-            {         
-                
+            {
+
                 float now = Time.realtimeSinceStartup;
                 if(now < nextFrameTime){
                     yield return new WaitForSecondsRealtime(nextFrameTime-now);
                 }
 
-                
-                
+
+
 
                 if (Downloader.renderQueue.TryDequeue(out var item)) {
                     (byte[] data, int downloadIndex, string quality) = item;
@@ -72,7 +72,7 @@ namespace Pcx{
                         }
                         lastRenderTime = currentTime;
                     }
-                    
+
                 }
                 nextFrameTime += renderInterval;
 
