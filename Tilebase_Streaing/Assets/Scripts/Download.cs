@@ -4,13 +4,15 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Linq;
+
 
 public class Download : MonoBehaviour
 {
-    private bool doTileDistribute = false;  // タイル分割/結合をするか決定
-    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線_タイル分割あり
-    private string baseUrl = "http://172.16.51.65:8000/merge_ply"; // デスクトップ_研究室_有線_タイル分割なし
-    // private string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_研究室_無線
+    private bool doTileDistribute = true;  // タイル分割/結合をするか決定
+    private string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線_タイル分割あり
+    // private string baseUrl = "http://172.16.51.65:8000/merge_ply"; // デスクトップ_研究室_有線_タイル分割なし
+    // private string baseUrl = "http://172.16.51.3:8000/get_file"; // デスクトップ_研究室_無線
     // private string baseUrl = "http://192.168.1.18:8000/get_file"; // デスクトップ_家_有線
     // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
     // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_無線
@@ -25,6 +27,8 @@ public class Download : MonoBehaviour
     private List<float> downloadTimes = new List<float>(); // 各ダウンロード時間を格納するリスト
 
     public static double startTimestamp = -1; // stopwatch起点
+
+    private System.Random random = new System.Random();
 
     void Start()
     {
@@ -88,8 +92,47 @@ public class Download : MonoBehaviour
 
     private List<int> GetRequestTileIndex(int frame)
     {
+        int index = (frame / 60) % tileSets.Length;  // 60フレーム = 2秒ごとに切替
+        return tileSets[index];
+
+
         // アルゴリズムは後で追加，とりあえず固定のタイル番号をリクエスト
-        return new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+        // return new List<int> { 2, 3, 4, 5, 8, 9, 10, 11 };
+        // return new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
+
+
+
+        // 1秒ごとにランダムで6タイル選択
+        // -------------------------------------------------------
+        // 30フレームごとにランダムなタイルを更新
+        // int groupIndex = frame / 30;
+
+        // // 同じ groupIndex のときは同じ乱数列を返すようにSeedを固定（再現性あり）
+        // System.Random rng = new System.Random(groupIndex);
+
+        // List<int> allIndices = Enumerable.Range(0, 12).ToList();
+        // List<int> selectedTiles = new List<int>();
+
+        // while (selectedTiles.Count < 6)
+        // {
+        //     int pick = allIndices[rng.Next(allIndices.Count)];
+        //     if (!selectedTiles.Contains(pick))
+        //     {
+        //         selectedTiles.Add(pick);
+        //     }
+        // }
+
+        // return selectedTiles;
+        // -------------------------------------------------------
     }
+
+    private List<int>[] tileSets = new List<int>[]
+    {
+        new List<int> {3, 5, 9, 11},              // tiles_1: 前面上側
+        new List<int> {1, 3, 7, 9},               // tiles_2: 前面下部
+        new List<int> {1, 3, 5},                  // tiles_3: 前面左
+        new List<int> {7, 9, 11},                 // tiles_4: 前面右
+        new List<int> {1, 3, 5, 7, 9, 11},        // tiles_5: 前面全て
+    };
 
 }

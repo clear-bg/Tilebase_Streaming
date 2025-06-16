@@ -33,6 +33,8 @@ namespace Pcx
             meshRenderer.sharedMaterial = importer.GetDefaultMaterial();
 
             logPath = Path.Combine(Application.dataPath, "Log/log_rendering.csv");
+            // ログファイルを初期化
+            File.WriteAllText(logPath, "Frame,DownloadedTime(ms),RenderedTime(ms),RenderDelay(ms),FrameInterval(ms)\n", Encoding.UTF8);
 
             // 初期バッファ充填完了を受け取る
             Download.OnBufferReady += EnableRendering;

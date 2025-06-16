@@ -3,16 +3,18 @@ import numpy as np
 import plyfile
 
 # 入力ディレクトリと出力ディレクトリ
-input_dir = r"C:\Users\clear\Project\Tile_distribute\Original_Ply"
-output_base_dir = r"C:\Users\clear\Project\Tile_distribute\Split"
+# input_dir = r"C:\Users\clear\Project\Tile_distribute\Original_Ply"
+input_dir = "Original_ply_80"
+# output_base_dir = r"C:\Users\clear\Project\Tile_distribute\Split"
+output_base_dir= "split_80"
 
 # 分割数
 x_splits, y_splits, z_splits = 2, 3, 2
 
 for file_num in range(300):
-    file_name = f"{file_num}.ply"
+    file_name = f"{file_num:03d}.ply"
     input_path = os.path.join(input_dir, file_name)
-    
+
     if not os.path.exists(input_path):
         print(f"存在しません: {input_path}")
         continue
@@ -58,7 +60,7 @@ for file_num in range(300):
 
                 out_file_name = f"{number_str}_tile_{xi}_{yi}_{zi}.ply"
                 out_path = os.path.join(output_dir, out_file_name)
-                
+
                 new_ply = plyfile.PlyData([plyfile.PlyElement.describe(sub_vertices, 'vertex')], text=False)
                 new_ply.write(out_path)
                 print(f"出力: {out_path}")
