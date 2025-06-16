@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Linq;
 
 namespace Pcx
 {
@@ -14,7 +15,11 @@ namespace Pcx
         MeshRenderer meshRenderer;
         private bool canRender = false; // レンダリング可能フラグ
 
-        private const float renderInterval = 0.01f; // レンダリング間隔 (秒)
+        private const float renderInterval = 1f / 30f; // レンダリング間隔 (秒)
+        private List<float> renderIntervalTimes = new List<float>(); // レンダリング間隔を格納するリスト
+        private float lastRenderTime = -1f; // 前回の描画時間
+        private List<float> fpsRecords = new List<float>(); // フレーム間隔リスト
+
         void Start()
         {
             QualitySettings.vSyncCount = 0; // VSyncを無効化
@@ -25,41 +30,47 @@ namespace Pcx
 
             // 初期バッファ充填完了を受け取る
             Download.OnBufferReady += EnableRendering;
-            StartCoroutine(RenderLoop());
+            // StartCoroutine(RenderLoop());
         }
 
         void EnableRendering()
         {
+            if (canRender) return; // すでに起動していれば無視
             canRender = true;
+            StartCoroutine(RenderLoop());
         }
 
         IEnumerator RenderLoop()
         {
-            float nextRenderTime = Time.realtimeSinceStartup;
+            float nextFrameTime = Time.realtimeSinceStartup + renderInterval;
+
             while (true)
             {
-                if (!canRender)
+                float now = Time.realtimeSinceStartup;
+                if (now < nextFrameTime)
                 {
-                    yield return null; // 初期バッファが満たされるまで待機
-                    continue;
+                    yield return new WaitForSecondsRealtime(nextFrameTime - now);
                 }
 
-                if (!Download.renderQueue.TryDequeue(out var item))
+                if (Download.renderQueue.TryDequeue(out var item))
                 {
-                    yield break; // キューが空なら何もせず抜ける
+                    (byte[] data, int downloadIndex) = item;
+
+                    if (downloadIndex >= 0)
+                    {
+                        yield return StartCoroutine(RenderFile(data, downloadIndex)); // レンダリング処理
+
+                        float currentTime = Time.realtimeSinceStartup;
+                        if (lastRenderTime > 0f)
+                        {
+                            float interval = currentTime - lastRenderTime;
+                            fpsRecords.Add(interval);
+                        }
+                        lastRenderTime = currentTime;
+                    }
+
                 }
-
-                (byte[] data, int downloadIndex) = item;
-
-                if (downloadIndex < 0)
-                {
-                    yield break; // 無効なインデックスはスキップ
-                }
-
-                yield return StartCoroutine(RenderFile(data, downloadIndex)); // レンダリング処理
-                nextRenderTime += renderInterval;
-
-                yield return new WaitForSeconds(renderInterval); // レンダリング間隔を設定
+                nextFrameTime += renderInterval;
             }
         }
 
@@ -77,7 +88,26 @@ namespace Pcx
 
         }
 
-        void OnApplicationQuit() { }
+        void OnApplicationQuit()
+        {
+            if (fpsRecords.Count == 0) return;
+
+
+
+            float sum = 0f;
+            foreach (var interval in fpsRecords)
+            {
+                float fps = 1f / interval;
+
+                sum += fps;
+            }
+
+            float avgFps = sum / fpsRecords.Count;
+
+
+
+            Debug.Log($"平均FPS: {1f / fpsRecords.Average():F2}");
+        }
         void OnDisable()
         {
             Download.OnBufferReady -= EnableRendering;

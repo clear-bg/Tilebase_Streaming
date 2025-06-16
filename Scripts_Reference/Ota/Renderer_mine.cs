@@ -4,17 +4,23 @@ using System.IO;
 using UnityEngine;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
+using System.Linq;
 
-namespace Pcx{
+namespace Pcx
+{
     public class Renderer : MonoBehaviour
     {
         public MeshFilter meshFilter; // レンダリング対象の MeshFilter
-        
+
         PlyImporter importer = new PlyImporter();
         MeshRenderer meshRenderer;
         private bool canRender = false; // レンダリング可能フラグ
 
-        private const float renderInterval = 0.01f; // レンダリング間隔 (秒)
+        private const float renderInterval = 1f / 30f; // レンダリング間隔 (秒)
+        private List<float> renderIntervalTimes = new List<float>(); // レンダリング間隔を格納するリスト
+        private float lastRenderTime = -1f; // 前回の描画時間
+        private List<float> fpsRecords = new List<float>(); // フレーム間隔リスト
+
 
         void Start()
         {
@@ -22,75 +28,86 @@ namespace Pcx{
             Application.targetFrameRate = 120; // 最大フレームレートを120FPSに設定
             meshFilter = gameObject.AddComponent<MeshFilter>();
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
-            meshRenderer.sharedMaterial = importer.GetDefaultMaterial(); 
-       
+            meshRenderer.sharedMaterial = importer.GetDefaultMaterial();
+
+
             // 初期バッファ充填完了を受け取る
             Downloader.OnBufferReady += EnableRendering;
-            StartCoroutine(RenderLoop());
+            // StartCoroutine(RenderLoop());
         }
 
-        // void Update()
-        // {
-        //     Debug.Log($"Current FPS: {1.0f / Time.deltaTime}");
-        // }
 
         void EnableRendering()
         {
-            canRender = true;
+            // canRender = true;
+            StartCoroutine(RenderLoop());
         }
 
         IEnumerator RenderLoop()
         {
-            float nextRenderTime = Time.realtimeSinceStartup;
+
+            float nextFrameTime = Time.realtimeSinceStartup + renderInterval;
+
             while (true)
             {
-                if (!canRender)
+
+                float now = Time.realtimeSinceStartup;
+                if (now < nextFrameTime)
                 {
-                    yield return null; // 初期バッファが満たされるまで待機
-                    continue;
+                    yield return new WaitForSecondsRealtime(nextFrameTime - now);
                 }
-                if (Time.realtimeSinceStartup >= nextRenderTime)
+
+
+
+
+                if (Downloader.renderQueue.TryDequeue(out var item))
                 {
-                    // int fileNumber = -1;
-                    // Debug.Log($"[lock Start] File:  Time: {Time.time}");
-                    // lock (Downloader.renderQueue) // キューの操作を同期化
-                    // {
+                    (byte[] data, int downloadIndex, string quality) = item;
 
-                    if (Downloader.renderQueue.TryDequeue(out var item)) {
-                        (byte[] data, int downloadIndex) = item;
+                    if (downloadIndex >= 0)
+                    {
+                        yield return StartCoroutine(RenderFile(data, downloadIndex)); // レンダリング処理
 
-                        if (downloadIndex >= 0){
-                            yield return StartCoroutine(RenderFile(data, downloadIndex)); // レンダリング処理
+                        float currentTime = Time.realtimeSinceStartup;
+                        if (lastRenderTime > 0f)
+                        {
+                            float interval = currentTime - lastRenderTime;
+                            fpsRecords.Add(interval);
                         }
-                        nextRenderTime += renderInterval;
+                        lastRenderTime = currentTime;
                     }
 
-                    // if (Downloader.renderQueue.Count > 0)
-                    // {
-                    //     // fileNumber = Downloader.renderQueue.Dequeue();
-                    //     (byte[] data, int downloadIndex) = Downloader.renderQueue.DeQueue();
-                    //     if (downloadIndex >= 0)
-                    //     {
-                    //         // yield return StartCoroutine(RenderFile(fileNumber)); // レンダリング処理
-                    //         yield return StartCoroutine(RenderFile(data, downloadIndex)); // レンダリング処理
-                    //     }
-                    //     // else
-                    //     // {
-                    //     //     yield return null; // レンダリング待機
-                    //     // }
-                    //     // lastRenderTime = Time.time; // 次の処理のために現在時刻を記録
-                    //     nextRenderTime += renderInterval;
-                        
-                    // }
-                    // // }
-                    // Debug.Log($"[lock Finished] File:  Time: {Time.time}");
+                }
+                nextFrameTime += renderInterval;
+
+                // if (Downloader.renderQueue.Count > 0)
+                // {
+                //     // fileNumber = Downloader.renderQueue.Dequeue();
+                //     (byte[] data, int downloadIndex) = Downloader.renderQueue.DeQueue();
+                //     if (downloadIndex >= 0)
+                //     {
+                //         // yield return StartCoroutine(RenderFile(fileNumber)); // レンダリング処理
+                //         yield return StartCoroutine(RenderFile(data, downloadIndex)); // レンダリング処理
+                //     }
+                //     // else
+                //     // {
+                //     //     yield return null; // レンダリング待機
+                //     // }
+                //     // lastRenderTime = Time.time; // 次の処理のために現在時刻を記録
+                //     nextRenderTime += renderInterval;
+
+                // }
+                // // }
+                // Debug.Log($"[lock Finished] File:  Time: {Time.time}");
 
 
-                }   
-                yield return new WaitForSeconds(renderInterval); // レンダリング間隔を設定
+
+                // yield return new WaitForSeconds(renderInterval); // レンダリング間隔を設定
                 // yield return null; // 毎フレーム待機
 
+
             }
+
         }
 
         // IEnumerator RenderFile(int fileNumber)
@@ -104,14 +121,21 @@ namespace Pcx{
             //    yield break;
             //}
 
-            if (false) {
+            if (false)
+            {
                 yield break;
             }
-       
-            Debug.Log($"[Rendering Start] File: {downloadIndex}, Time: {Time.time}");            
+
+
+            // Debug.Log($"[Rendering Start] File: {downloadIndex}, Time: {Time.time}");  
+
             var mesh = importer.ImportAsMesh(data, downloadIndex); // ファイルをメッシュに変換            
-            meshFilter.sharedMesh = mesh;           
-            Debug.Log($"[Rendering Complete] File: {downloadIndex}, Time: {Time.time}");
+            meshFilter.sharedMesh = mesh;
+
+
+
+            // Debug.Log($"[Rendering Complete] File: {downloadIndex}, Time: {Time.time}");
+
 
         }
 
@@ -119,5 +143,29 @@ namespace Pcx{
         {
             return Path.Combine(Application.dataPath, "Download", $"{fileNumber}.ply");
         }
+
+        void OnApplicationQuit()
+        {
+            if (fpsRecords.Count == 0) return;
+
+
+
+            float sum = 0f;
+            foreach (var interval in fpsRecords)
+            {
+                float fps = 1f / interval;
+
+                sum += fps;
+            }
+
+            float avgFps = sum / fpsRecords.Count;
+
+
+
+            Debug.Log($"平均FPS: {1f / (fpsRecords.Average()):F2}");
+        }
+
+
+
     }
 }

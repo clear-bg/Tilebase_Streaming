@@ -7,9 +7,9 @@ using System.Diagnostics;
 
 public class Download : MonoBehaviour
 {
-    private bool doTileDistribute = true;  // タイル分割/結合をするか決定
-    private string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線_タイル分割あり
-    // private string baseUrl = "http://172.16.51.65:8000/merge_ply"; // デスクトップ_研究室_有線_タイル分割なし
+    private bool doTileDistribute = false;  // タイル分割/結合をするか決定
+    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線_タイル分割あり
+    private string baseUrl = "http://172.16.51.65:8000/merge_ply"; // デスクトップ_研究室_有線_タイル分割なし
     // private string baseUrl = "http://172.16.51.59:8000/get_file"; // デスクトップ_研究室_無線
     // private string baseUrl = "http://192.168.1.18:8000/get_file"; // デスクトップ_家_有線
     // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
