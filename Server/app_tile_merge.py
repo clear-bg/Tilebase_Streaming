@@ -1,6 +1,6 @@
 r'''
 サーバ起動は必ず Streming/Server ディレクトリから行う
-uvicorn app_tile_merge:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app_tile_merge:app --host 127.0.0.1 --port 8000 --reload
 
 C:\Users\clear\AppData\Roaming\Python\Python310\Scripts\uvicorn.exe Initialize.app:app --host 0.0.0.0 --port 8000 --reload
 '''

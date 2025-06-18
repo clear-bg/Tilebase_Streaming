@@ -10,12 +10,7 @@ using System.Linq;
 public class Download : MonoBehaviour
 {
     private bool doTileDistribute = true;  // タイル分割/結合をするか決定
-    private string baseUrl = "http://172.16.51.65:8000/get_file"; // デスクトップ_研究室_有線_タイル分割あり
-    // private string baseUrl = "http://172.16.51.65:8000/merge_ply"; // デスクトップ_研究室_有線_タイル分割なし
-    // private string baseUrl = "http://172.16.51.3:8000/get_file"; // デスクトップ_研究室_無線
-    // private string baseUrl = "http://192.168.1.18:8000/get_file"; // デスクトップ_家_有線
-    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_有線
-    // private string baseUrl = "http://172.16.51.65:8000/get_file"; // ノート_無線
+    private string baseUrl = "http://localhost:8000/get_file";
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
