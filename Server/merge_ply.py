@@ -19,7 +19,6 @@ def merge_ply_files(tile_files, frame_num):
 
     merged_data = np.concatenate(all_vertices)
 
-    # 保存先ディレクトリとファイル名
     merge_dir = os.path.join(os.path.dirname(__file__), 'merge_ply')
     os.makedirs(merge_dir, exist_ok=True)
     merged_path = os.path.join(merge_dir, f"{frame_num:03d}_merged.ply")
