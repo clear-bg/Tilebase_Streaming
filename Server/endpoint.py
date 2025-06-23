@@ -24,7 +24,6 @@ def register_endpoints(app: FastAPI):
 
         base_dir = os.path.join(os.path.dirname(__file__), "get_file", dataset)
         file_list = get_tile_file_paths(frame, tile_index, index2xyz, base_dir, include_frame_in_name=False)
-
         file_list = [p for p in file_list if os.path.exists(p)]
         if not file_list:
             raise HTTPException(status_code=404, detail="No tile files found")
@@ -36,7 +35,11 @@ def register_endpoints(app: FastAPI):
             raise HTTPException(status_code=500, detail=str(e))
         end = time.time()
 
-        log_merge_time(frame, start, end)
+        # グリッドサイズに応じてログファイル名を切替
+        grid_name = f"{gx}x{gy}x{gz}"  # 例: 5x5x5
+        tile_count = len(tile_index)
+        log_filename = f"{grid_name}_{tile_count}tiles"
+        log_merge_time(frame, start, end, endpoint_name=log_filename)
 
         return FileResponse(
             merged_path,
