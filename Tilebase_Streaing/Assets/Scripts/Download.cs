@@ -15,8 +15,7 @@ public class Download : MonoBehaviour
 
     private bool doTileDistribute = true;  // タイル分割/結合をするか決定
     // private string baseUrl = "http://localhost:8000/merge_ply";             // 完全マージ済みファイル用
-    private string baseUrl = "http://localhost:8000/split_20_to_5_5_5";     // 5x5x5のタイル合成
-    // private string baseUrl = "http://localhost:8000/get_file";                 // 汎用エンドポイント（n×n×n）
+    private string baseUrl = "http://localhost:8000/get_file";                 // 汎用エンドポイント（n×n×n）
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
@@ -47,9 +46,9 @@ public class Download : MonoBehaviour
             {
                 List<int> tileIndex = GetRequestTileIndex(downloadIndex);
                 string tileParam = string.Join(",", tileIndex);
-                // url = $"{baseUrl}?frame={downloadIndex}&tiles={tileParam}";
                 string gridParam = $"{gridX}_{gridY}_{gridZ}";
-                url = $"{baseUrl}?frame={downloadIndex}&tiles={tileParam}&grid={gridParam}";
+                string dataset = $"split_20_to_{gridParam}";
+                url = $"{baseUrl}?dataset={dataset}&frame={downloadIndex}&tiles={tileParam}&grid={gridParam}";
             }
             else
             {
@@ -96,10 +95,10 @@ public class Download : MonoBehaviour
     private List<int> GetRequestTileIndex(int frame)
     {
         int index = (frame / 60) % tileSets.Length;  // 60フレーム = 2秒ごとに切替
-        // return tileSets[index];
+        return tileSets[index];
 
         // 強制的に 0〜124 の全タイルを返す（5x5x5 = 125個）
-        return Enumerable.Range(0, 125).ToList();
+        // return Enumerable.Range(0, 125).ToList();
         // return new List<int> { 1, 2 };
 
 
