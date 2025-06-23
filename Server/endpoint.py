@@ -54,7 +54,6 @@ def register_endpoints(app: FastAPI):
         base_dir = os.path.join(os.path.dirname(__file__), "split_20_to_5_5_5")
         all_paths = get_tile_file_paths(frame, tile_index, index2xyz, base_dir)
 
-        # ✅ 存在するファイルだけに絞る
         file_list = [path for path in all_paths if os.path.exists(path)]
         if not file_list:
             raise HTTPException(status_code=404, detail="No tile files found")
@@ -77,7 +76,6 @@ def register_endpoints(app: FastAPI):
 
     @app.get("/merge_ply")
     async def merge_ply(frame: int):
-        # merge_ply/000_merged.ply の形式でファイルパスを作る
         frame_str = f"{frame:03d}"
         merged_dir = os.path.join(os.path.dirname(__file__), "merge_ply")
         merged_path = os.path.join(merged_dir, f"{frame_str}_merged.ply")

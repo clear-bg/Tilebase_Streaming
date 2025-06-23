@@ -100,36 +100,12 @@ public class Download : MonoBehaviour
 
         // 強制的に 0〜124 の全タイルを返す（5x5x5 = 125個）
         return Enumerable.Range(0, 125).ToList();
+        // return new List<int> { 1, 2 };
 
 
         // アルゴリズムは後で追加，とりあえず固定のタイル番号をリクエスト
         // return new List<int> { 2, 3, 4, 5, 8, 9, 10, 11 };
         // return new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-
-
-
-        // 1秒ごとにランダムで6タイル選択
-        // -------------------------------------------------------
-        // 30フレームごとにランダムなタイルを更新
-        // int groupIndex = frame / 30;
-
-        // // 同じ groupIndex のときは同じ乱数列を返すようにSeedを固定（再現性あり）
-        // System.Random rng = new System.Random(groupIndex);
-
-        // List<int> allIndices = Enumerable.Range(0, 12).ToList();
-        // List<int> selectedTiles = new List<int>();
-
-        // while (selectedTiles.Count < 6)
-        // {
-        //     int pick = allIndices[rng.Next(allIndices.Count)];
-        //     if (!selectedTiles.Contains(pick))
-        //     {
-        //         selectedTiles.Add(pick);
-        //     }
-        // }
-
-        // return selectedTiles;
-        // -------------------------------------------------------
     }
 
     private List<int>[] tileSets = new List<int>[]
