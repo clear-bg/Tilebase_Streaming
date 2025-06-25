@@ -9,9 +9,9 @@ using System.Linq;
 
 public class Download : MonoBehaviour
 {
-    private int gridX = 2;
-    private int gridY = 3;
-    private int gridZ = 2;
+    private int gridX = 5;
+    private int gridY = 5;
+    private int gridZ = 5;
 
     private bool doTileDistribute = true;  // タイル分割/結合をするか決定
     // private string baseUrl = "http://localhost:8000/merge_ply";             // 完全マージ済みファイル用
@@ -98,7 +98,7 @@ public class Download : MonoBehaviour
         // return tileSets[index];
 
         // 強制的に 0〜124 の全タイルを返す（5x5x5 = 125個）
-        return Enumerable.Range(0, 6).ToList();
+        return Enumerable.Range(0, 125).ToList();
         // return new List<int> { 1, 2 };
 
 
