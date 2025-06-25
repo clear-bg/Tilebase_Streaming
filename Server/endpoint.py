@@ -7,6 +7,7 @@ from utils import get_tile_file_paths
 import os
 import time
 from os.path import exists
+import glob
 
 def register_endpoints(app: FastAPI):
 
@@ -39,6 +40,20 @@ def register_endpoints(app: FastAPI):
         grid_name = f"{gx}x{gy}x{gz}"  # 例: 5x5x5
         tile_count = len(tile_index)
         log_filename = f"{grid_name}_{tile_count}tiles"
+
+        # frame == 0 のときのみ、ログCSVを削除
+        if frame == 0:
+            csv_dir = os.path.join(os.path.dirname(__file__), "merge_logs")
+            pattern = os.path.join(csv_dir, f"merge_time_{log_filename}.csv")
+            for f in glob.glob(pattern):
+                os.remove(f)
+
+        # 初回のみ: マージ済みPLYファイルを削除
+        if frame == 0:
+            merged_dir = os.path.join(os.path.dirname(__file__), "merge_ply")
+            for f in glob.glob(os.path.join(merged_dir, "*.ply")):
+                os.remove(f)
+
         log_merge_time(frame, start, end, endpoint_name=log_filename)
 
         return FileResponse(
