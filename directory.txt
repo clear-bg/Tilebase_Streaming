@@ -4,27 +4,38 @@ Streming/
 ├── directory.txt
 ├── Server/
 │   ├── app.py
-│   ├── app_multipart.py
-│   ├── app_single_response.py
-│   └── get_file/
-│       ├── 000/
-│       │    ├── 000_tile_0_0_0.ply
-│       │    ├── ...
-│       │    └── 000_tile_1_2_1.ply
-│       ├── 001/
-│       ├── ...
-│       └── 299/
+│   ├── endpoint.py
+│   ├── manage_time.py
+│   ├── merge_ply.py
+│   ├── tile_index.py
+│   ├── utils.py
+│   ├── get_file/
+│   │   ├── split_20_to_2_3_2/
+│   │   │   ├── 000/
+│   │   │   │    ├── 000_tile_0_0_0.ply
+│   │   │   │    ├── ...
+│   │   │   │    └── 000_tile_1_2_1.ply
+│   │   │   ├── 001/
+│   │   │   ├── ...
+│   │   │   └── 299/
+│   │   └── split_20_to_5_5_5/
+│   │       └── *.ply              # into plyfile as same as 2x3x2
+│   ├── Original_ply_20/
+│   │   └── *.ply                  # 000.ply~299.ply
+│   ├── merge_ply/
+│   │   └── *.ply                  # 000.ply~299.ply
+│   └── merge_logs/
+│       └── *.csv                  # csv logs
 ├── Tile_distribute/
 │   ├── split_ply.py
-│   └── Original_ply/
-│       ├── 0.ply
-│       ├── 1.ply
-│       ├── ...
-│       └── 299.ply
+│   ├── output.csv
+│   └── Original_ply_20/
+│       └── *.ply                  # 000.ply~299.ply
 └── Tilebase_Streaming/ (Unityプロジェクト)
-    ├── Assets/
-    │   └── Scripts/
-    │       ├── Download.cs
-    │       └── Rendering.cs
-    ├── Download_ply/
-    └── Pcx/
+    └── Assets/
+        ├── Scripts/
+        │   ├── Download.cs
+        │   ├── Rendering.cs
+        │   ├── PointCloudImporter.cs
+        │   └── CameraController.cs
+        └── Pcx/

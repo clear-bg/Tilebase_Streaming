@@ -9,15 +9,17 @@ using System.Linq;
 
 public class Download : MonoBehaviour
 {
+    private CameraLogger cameraLogger;
     private int gridX = 5;
     private int gridY = 5;
     private int gridZ = 5;
 
-    private bool doTileDistribute = true;  // タイル分割/結合をするか決定
-    // private string baseUrl = "http://localhost:8000/merge_ply";             // 完全マージ済みファイル用
-    private string baseUrl = "http://localhost:8000/split_20_to_5_5_5";     // 5x5x5のタイル合成
-    // private string baseUrl = "http://localhost:8000/get_file";                 // 汎用エンドポイント（n×n×n）
+    // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
+    private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
+    // private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
+    public int loopCount = -1;  // 再生回数。-1で無限ループ
+
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
     private int downloadIndex = 0; // ダウンロード進行インデックス
@@ -33,6 +35,7 @@ public class Download : MonoBehaviour
 
     void Start()
     {
+        cameraLogger = FindObjectOfType<CameraLogger>();
         // Stopwatchの起動（基準タイミング）
         startTimestamp = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0; // ms
         StartCoroutine(DownloadLoop());
@@ -40,96 +43,78 @@ public class Download : MonoBehaviour
 
     IEnumerator DownloadLoop()
     {
-        while (downloadIndex < totalFrames)
+        int loopCounter = 0;
+        initialBufferFilled = false;
+
+        while (loopCount == -1 || loopCounter < loopCount)
         {
-            string url;
-            if (doTileDistribute)
+            downloadIndex = 0;
+
+            while (downloadIndex < totalFrames)
             {
-                List<int> tileIndex = GetRequestTileIndex(downloadIndex);
-                string tileParam = string.Join(",", tileIndex);
-                // url = $"{baseUrl}?frame={downloadIndex}&tiles={tileParam}";
-                string gridParam = $"{gridX}_{gridY}_{gridZ}";
-                url = $"{baseUrl}?frame={downloadIndex}&tiles={tileParam}&grid={gridParam}";
+                string url;
+                string baseName = baseUrl.ToLower();
+
+                if (baseName.Contains("get_file"))
+                {
+                    List<int> tileIndex = GetRequestTileIndex(downloadIndex);
+                    string tileParam = string.Join(",", tileIndex);
+                    string gridParam = $"{gridX}_{gridY}_{gridZ}";
+                    string dataset = $"split_20_to_{gridParam}";
+                    url = $"{baseUrl}?dataset={dataset}&frame={downloadIndex}&tiles={tileParam}&grid={gridParam}";
+                }
+                else if (baseName.Contains("merge_ply") || baseName.Contains("original_ply_20"))
+                {
+                    url = $"{baseUrl}?frame={downloadIndex}";
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError($"Unknown endpoint baseUrl: {baseUrl}");
+                    yield break;
+                }
+
+                UnityWebRequest uwr = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET);
+                uwr.downloadHandler = new DownloadHandlerBuffer();
+                yield return uwr.SendWebRequest();
+
+                double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0;
+                double elapsed = now - startTimestamp;
+
+                if (uwr.result == UnityWebRequest.Result.Success)
+                {
+                    byte[] data = uwr.downloadHandler.data;
+                    renderQueue.Enqueue((data, downloadIndex, elapsed));
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError($"[Download Error URL] {url}\n[Download Error] File: {downloadIndex}, Error: {uwr.error}");
+                }
+
+                if (cameraLogger != null)
+                {
+                    cameraLogger.currentViewFrame = downloadIndex;
+                }
+                downloadIndex++;
+
+                if (!initialBufferFilled && renderQueue.Count >= initialBufferSize)
+                {
+                    initialBufferFilled = true;
+                    OnBufferReady?.Invoke();
+                    UnityEngine.Debug.Log("初期バッファが充填されました。レンダリングを開始してください。");
+                }
             }
-            else
-            {
-                // baseUrlは「http://xxx/merge_ply」でコメントアウト等で切替
-                url = $"{baseUrl}?frame={downloadIndex}";
-            }
 
-            UnityWebRequest uwr = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET);
-            uwr.downloadHandler = new DownloadHandlerBuffer();
-
-            yield return uwr.SendWebRequest();
-
-            double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0;
-            double elapsed = now - startTimestamp; // 0ms起点
-
-            if (uwr.result == UnityWebRequest.Result.Success)
-            {
-                byte[] data = uwr.downloadHandler.data;
-                // Debug.Log(data);
-                renderQueue.Enqueue((data, downloadIndex, elapsed)); // ← elapsed(ダウンロード時刻ms)も一緒に入れる！
-            }
-            else
-            {
-                UnityEngine.Debug.LogError($"[Download Error URL] {url}\n[Download Error] File: {downloadIndex}, Error: {uwr.error}");
-            }
-
-            downloadIndex++;
-
-            // 初期バッファが充填されたら通知
-            if (!initialBufferFilled && renderQueue.Count >= initialBufferSize)
-            {
-                initialBufferFilled = true;
-                OnBufferReady?.Invoke(); // 初期バッファ完了を通知
-                UnityEngine.Debug.Log("初期バッファが充填されました。レンダリングを開始してください。");
-            }
+            loopCounter++;
         }
+
+        UnityEngine.Debug.Log("全ループ再生が完了しました。");
     }
 
-    // private string GetFilePath(int fileNumber)
-    // {
-    //     return Path.Combine(Application.dataPath, "Download", $"{fileNumber}.ply");
-    // }
 
     private List<int> GetRequestTileIndex(int frame)
     {
-        int index = (frame / 60) % tileSets.Length;  // 60フレーム = 2秒ごとに切替
-        // return tileSets[index];
-
-        // 強制的に 0〜124 の全タイルを返す（5x5x5 = 125個）
-        return Enumerable.Range(0, 125).ToList();
-
-
-        // アルゴリズムは後で追加，とりあえず固定のタイル番号をリクエスト
-        // return new List<int> { 2, 3, 4, 5, 8, 9, 10, 11 };
-        // return new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
-
-
-
-        // 1秒ごとにランダムで6タイル選択
-        // -------------------------------------------------------
-        // 30フレームごとにランダムなタイルを更新
-        // int groupIndex = frame / 30;
-
-        // // 同じ groupIndex のときは同じ乱数列を返すようにSeedを固定（再現性あり）
-        // System.Random rng = new System.Random(groupIndex);
-
-        // List<int> allIndices = Enumerable.Range(0, 12).ToList();
-        // List<int> selectedTiles = new List<int>();
-
-        // while (selectedTiles.Count < 6)
-        // {
-        //     int pick = allIndices[rng.Next(allIndices.Count)];
-        //     if (!selectedTiles.Contains(pick))
-        //     {
-        //         selectedTiles.Add(pick);
-        //     }
-        // }
-
-        // return selectedTiles;
-        // -------------------------------------------------------
+        // 強制的に 0〜124 の隣接タイルを返す
+        return Enumerable.Range(0, 72).ToList();
     }
 
     private List<int>[] tileSets = new List<int>[]
@@ -140,5 +125,4 @@ public class Download : MonoBehaviour
         new List<int> {7, 9, 11},                 // tiles_4: 前面右
         new List<int> {1, 3, 5, 7, 9, 11},        // tiles_5: 前面全て
     };
-
 }
