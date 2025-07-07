@@ -53,3 +53,4 @@ venv/
 .DS_Store
 Thumbs.db
 ehthumbs.db
+**/UserSettings/Layouts/
