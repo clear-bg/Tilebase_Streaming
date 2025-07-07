@@ -14,7 +14,6 @@ def merge_ply_files(tile_files, frame_num):
         vertex = plydata['vertex']
 
         if len(vertex.data) == 0: # 頂点が0のPLYファイルはスキップ
-            # print(f"スキップ: {file_path}（頂点数0）")
             continue
 
         all_vertices.append(vertex.data)

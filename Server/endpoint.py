@@ -37,7 +37,7 @@ def register_endpoints(app: FastAPI):
         end = time.time()
 
         # グリッドサイズに応じてログファイル名を切替
-        grid_name = f"{gx}x{gy}x{gz}"  # 例: 5x5x5
+        grid_name = f"{gx}x{gy}x{gz}"
         tile_count = len(tile_index)
         log_filename = f"{grid_name}_{tile_count}tiles"
 

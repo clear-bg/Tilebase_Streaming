@@ -13,8 +13,6 @@ public class Download : MonoBehaviour
     private int gridY = 5;
     private int gridZ = 5;
 
-    private bool doTileDistribute = true;  // タイル分割/結合をするか決定
-
     // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
     private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
     // private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
@@ -48,7 +46,6 @@ public class Download : MonoBehaviour
 
             if (baseName.Contains("get_file"))
             {
-                // タイルを送る（分割・結合）
                 List<int> tileIndex = GetRequestTileIndex(downloadIndex);
                 string tileParam = string.Join(",", tileIndex);
                 string gridParam = $"{gridX}_{gridY}_{gridZ}";
@@ -57,12 +54,10 @@ public class Download : MonoBehaviour
             }
             else if (baseName.Contains("merge_ply") || baseName.Contains("original_ply_20"))
             {
-                // マージ済み or オリジナル（frameのみ）
                 url = $"{baseUrl}?frame={downloadIndex}";
             }
             else
             {
-                // 未対応エンドポイント
                 UnityEngine.Debug.LogError($"Unknown endpoint baseUrl: {baseUrl}");
                 yield break;
             }
@@ -96,25 +91,10 @@ public class Download : MonoBehaviour
         }
     }
 
-
-    // private string GetFilePath(int fileNumber)
-    // {
-    //     return Path.Combine(Application.dataPath, "Download", $"{fileNumber}.ply");
-    // }
-
     private List<int> GetRequestTileIndex(int frame)
     {
-        int index = (frame / 60) % tileSets.Length;  // 60フレーム = 2秒ごとに切替
-        // return tileSets[index];
-
-        // 強制的に 0〜124 の全タイルを返す（5x5x5 = 125個）
+        // 強制的に 0〜124 の隣接タイルを返す
         return Enumerable.Range(0, 72).ToList();
-        // return new List<int> { 1, 2 };
-
-
-        // アルゴリズムは後で追加，とりあえず固定のタイル番号をリクエスト
-        // return new List<int> { 2, 3, 4, 5, 8, 9, 10, 11 };
-        // return new List<int> { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 };
     }
 
     private List<int>[] tileSets = new List<int>[]
@@ -125,5 +105,4 @@ public class Download : MonoBehaviour
         new List<int> {7, 9, 11},                 // tiles_4: 前面右
         new List<int> {1, 3, 5, 7, 9, 11},        // tiles_5: 前面全て
     };
-
 }

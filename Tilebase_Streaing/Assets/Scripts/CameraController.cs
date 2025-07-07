@@ -16,10 +16,10 @@ public class CameraController : MonoBehaviour
     [SerializeField, Range(30.0f, 300.0f)]
     private float _mouseSensitive = 45.0f;
 
-    // カメラのTransform  
+    // カメラのTransform
     private Transform _camTransform;
 
-    // マウスの始点 
+    // マウスの始点
     private Vector3 _startMousePos;
 
     // カメラ回転の始点情報
@@ -66,12 +66,12 @@ public class CameraController : MonoBehaviour
     {
         Vector3 campos = _camTransform.position;
 
-        if (Input.GetKey(KeyCode.D))         { campos += _camTransform.right   * Time.deltaTime * _positionStep; }
-        if (Input.GetKey(KeyCode.A))         { campos -= _camTransform.right   * Time.deltaTime * _positionStep; }
-        if (Input.GetKey(KeyCode.Space))     { campos += _camTransform.up      * Time.deltaTime * _positionStep; }
-        if (Input.GetKey(KeyCode.LeftShift)) { campos -= _camTransform.up      * Time.deltaTime * _positionStep; }
-        if (Input.GetKey(KeyCode.W))         { campos += _camTransform.forward * Time.deltaTime * _positionStep; }
-        if (Input.GetKey(KeyCode.S))         { campos -= _camTransform.forward * Time.deltaTime * _positionStep; }
+        if (Input.GetKey(KeyCode.D)) { campos += _camTransform.right * Time.deltaTime * _positionStep; }
+        if (Input.GetKey(KeyCode.A)) { campos -= _camTransform.right * Time.deltaTime * _positionStep; }
+        if (Input.GetKey(KeyCode.Space)) { campos += _camTransform.up * Time.deltaTime * _positionStep; }
+        if (Input.GetKey(KeyCode.LeftShift)) { campos -= _camTransform.up * Time.deltaTime * _positionStep; }
+        if (Input.GetKey(KeyCode.W)) { campos += _camTransform.forward * Time.deltaTime * _positionStep; }
+        if (Input.GetKey(KeyCode.S)) { campos -= _camTransform.forward * Time.deltaTime * _positionStep; }
 
         _camTransform.position = campos;
     }

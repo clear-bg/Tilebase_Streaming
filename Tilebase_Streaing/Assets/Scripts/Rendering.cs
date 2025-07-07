@@ -38,7 +38,6 @@ namespace Pcx
 
             // 初期バッファ充填完了を受け取る
             Download.OnBufferReady += EnableRendering;
-            // StartCoroutine(RenderLoop());
         }
 
         void EnableRendering()
@@ -99,7 +98,7 @@ namespace Pcx
             }
 
             Debug.Log($"[Rendering Start] File: {downloadIndex}, Time: {Time.time}");
-            var mesh = importer.ImportAsMesh(data, downloadIndex); // ファイルをメッシュに変換
+            var mesh = importer.ImportAsMesh(data, downloadIndex);
             meshFilter.sharedMesh = mesh;
             Debug.Log($"[Rendering Complete] File: {downloadIndex}, Time: {Time.time}");
         }

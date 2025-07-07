@@ -14,7 +14,7 @@ x_splits, y_splits, z_splits = 2, 3, 2
 if os.path.exists(csv_path):
     os.remove(csv_path)
 
-# ヘッダを書き込む
+# ヘッダを書き込み
 with open(csv_path, mode='w', newline='') as f:
     writer = csv.writer(f)
     writer.writerow(["Frame", "Start(ms)", "End(ms)", "Elapsed(ms)"])
