@@ -98,7 +98,7 @@ public class Download : MonoBehaviour
         // return tileSets[index];
 
         // 強制的に 0〜124 の全タイルを返す（5x5x5 = 125個）
-        return Enumerable.Range(0, 125).ToList();
+        return Enumerable.Range(0, 72).ToList();
         // return new List<int> { 1, 2 };
 
 
