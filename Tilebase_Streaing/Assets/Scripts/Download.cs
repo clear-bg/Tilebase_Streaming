@@ -17,6 +17,8 @@ public class Download : MonoBehaviour
     private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
     // private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
+    public int loopCount = 2;  // 再生回数。-1で無限ループ
+
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
     private int downloadIndex = 0; // ダウンロード進行インデックス
@@ -39,57 +41,68 @@ public class Download : MonoBehaviour
 
     IEnumerator DownloadLoop()
     {
-        while (downloadIndex < totalFrames)
+        int loopCounter = 0;
+
+        while (loopCount == -1 || loopCounter < loopCount)
         {
-            string url;
-            string baseName = baseUrl.ToLower();
+            downloadIndex = 0;
 
-            if (baseName.Contains("get_file"))
+            while (downloadIndex < totalFrames)
             {
-                List<int> tileIndex = GetRequestTileIndex(downloadIndex);
-                string tileParam = string.Join(",", tileIndex);
-                string gridParam = $"{gridX}_{gridY}_{gridZ}";
-                string dataset = $"split_20_to_{gridParam}";
-                url = $"{baseUrl}?dataset={dataset}&frame={downloadIndex}&tiles={tileParam}&grid={gridParam}";
-            }
-            else if (baseName.Contains("merge_ply") || baseName.Contains("original_ply_20"))
-            {
-                url = $"{baseUrl}?frame={downloadIndex}";
-            }
-            else
-            {
-                UnityEngine.Debug.LogError($"Unknown endpoint baseUrl: {baseUrl}");
-                yield break;
+                string url;
+                string baseName = baseUrl.ToLower();
+
+                if (baseName.Contains("get_file"))
+                {
+                    List<int> tileIndex = GetRequestTileIndex(downloadIndex);
+                    string tileParam = string.Join(",", tileIndex);
+                    string gridParam = $"{gridX}_{gridY}_{gridZ}";
+                    string dataset = $"split_20_to_{gridParam}";
+                    url = $"{baseUrl}?dataset={dataset}&frame={downloadIndex}&tiles={tileParam}&grid={gridParam}";
+                }
+                else if (baseName.Contains("merge_ply") || baseName.Contains("original_ply_20"))
+                {
+                    url = $"{baseUrl}?frame={downloadIndex}";
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError($"Unknown endpoint baseUrl: {baseUrl}");
+                    yield break;
+                }
+
+                UnityWebRequest uwr = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET);
+                uwr.downloadHandler = new DownloadHandlerBuffer();
+                yield return uwr.SendWebRequest();
+
+                double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0;
+                double elapsed = now - startTimestamp;
+
+                if (uwr.result == UnityWebRequest.Result.Success)
+                {
+                    byte[] data = uwr.downloadHandler.data;
+                    renderQueue.Enqueue((data, downloadIndex, elapsed));
+                }
+                else
+                {
+                    UnityEngine.Debug.LogError($"[Download Error URL] {url}\n[Download Error] File: {downloadIndex}, Error: {uwr.error}");
+                }
+
+                downloadIndex++;
+
+                if (!initialBufferFilled && renderQueue.Count >= initialBufferSize)
+                {
+                    initialBufferFilled = true;
+                    OnBufferReady?.Invoke();
+                    UnityEngine.Debug.Log("初期バッファが充填されました。レンダリングを開始してください。");
+                }
             }
 
-            UnityWebRequest uwr = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET);
-            uwr.downloadHandler = new DownloadHandlerBuffer();
-
-            yield return uwr.SendWebRequest();
-
-            double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0;
-            double elapsed = now - startTimestamp;
-
-            if (uwr.result == UnityWebRequest.Result.Success)
-            {
-                byte[] data = uwr.downloadHandler.data;
-                renderQueue.Enqueue((data, downloadIndex, elapsed));
-            }
-            else
-            {
-                UnityEngine.Debug.LogError($"[Download Error URL] {url}\n[Download Error] File: {downloadIndex}, Error: {uwr.error}");
-            }
-
-            downloadIndex++;
-
-            if (!initialBufferFilled && renderQueue.Count >= initialBufferSize)
-            {
-                initialBufferFilled = true;
-                OnBufferReady?.Invoke();
-                UnityEngine.Debug.Log("初期バッファが充填されました。レンダリングを開始してください。");
-            }
+            loopCounter++;
         }
+
+        UnityEngine.Debug.Log("全ループ再生が完了しました。");
     }
+
 
     private List<int> GetRequestTileIndex(int frame)
     {
