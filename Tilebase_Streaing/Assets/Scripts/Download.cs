@@ -17,7 +17,7 @@ public class Download : MonoBehaviour
     private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
     // private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
-    public int loopCount = 2;  // 再生回数。-1で無限ループ
+    public int loopCount = -1;  // 再生回数。-1で無限ループ
 
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
@@ -42,6 +42,7 @@ public class Download : MonoBehaviour
     IEnumerator DownloadLoop()
     {
         int loopCounter = 0;
+        initialBufferFilled = false;
 
         while (loopCount == -1 || loopCounter < loopCount)
         {

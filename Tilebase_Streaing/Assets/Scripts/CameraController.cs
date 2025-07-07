@@ -9,7 +9,7 @@ public class CameraController : MonoBehaviour
     // 左ドラッグ：視点の移動（左右反転済み）
 
     // カメラの移動量
-    [SerializeField, Range(50.0f, 200.0f)]
+    [SerializeField, Range(50.0f, 400.0f)]
     private float _positionStep = 100.0f;
 
     // マウス感度
