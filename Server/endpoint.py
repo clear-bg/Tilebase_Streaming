@@ -77,3 +77,18 @@ def register_endpoints(app: FastAPI):
             media_type="application/octet-stream",
             filename=f"{frame_str}_merged.ply"
         )
+
+    @app.get("/Original_ply_20")
+    async def get_original_ply(frame: int):
+        frame_str = f"{frame:03d}"
+        original_dir = os.path.join(os.path.dirname(__file__), "Original_ply_20")
+        original_path = os.path.join(original_dir, f"{frame_str}.ply")
+
+        if not os.path.exists(original_path):
+            raise HTTPException(status_code=404, detail="Original PLY file not found")
+
+        return FileResponse(
+            original_path,
+            media_type="application/octet-stream",
+            filename=f"{frame_str}.ply"
+        )

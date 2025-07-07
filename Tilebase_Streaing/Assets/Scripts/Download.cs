@@ -14,8 +14,10 @@ public class Download : MonoBehaviour
     private int gridZ = 5;
 
     private bool doTileDistribute = true;  // タイル分割/結合をするか決定
-    // private string baseUrl = "http://localhost:8000/merge_ply";             // 完全マージ済みファイル用
-    private string baseUrl = "http://localhost:8000/get_file";                 // エンドポイント統一
+
+    // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
+    private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
+    // private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
     public int initialBufferSize = 30; // 初期バッファサイズ
     public int totalFrames = 300; // 総フレーム数
@@ -42,18 +44,27 @@ public class Download : MonoBehaviour
         while (downloadIndex < totalFrames)
         {
             string url;
-            if (doTileDistribute)
+            string baseName = baseUrl.ToLower();
+
+            if (baseName.Contains("get_file"))
             {
+                // タイルを送る（分割・結合）
                 List<int> tileIndex = GetRequestTileIndex(downloadIndex);
                 string tileParam = string.Join(",", tileIndex);
                 string gridParam = $"{gridX}_{gridY}_{gridZ}";
                 string dataset = $"split_20_to_{gridParam}";
                 url = $"{baseUrl}?dataset={dataset}&frame={downloadIndex}&tiles={tileParam}&grid={gridParam}";
             }
+            else if (baseName.Contains("merge_ply") || baseName.Contains("original_ply_20"))
+            {
+                // マージ済み or オリジナル（frameのみ）
+                url = $"{baseUrl}?frame={downloadIndex}";
+            }
             else
             {
-                // baseUrlは「http://xxx/merge_ply」でコメントアウト等で切替
-                url = $"{baseUrl}?frame={downloadIndex}";
+                // 未対応エンドポイント
+                UnityEngine.Debug.LogError($"Unknown endpoint baseUrl: {baseUrl}");
+                yield break;
             }
 
             UnityWebRequest uwr = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET);
@@ -62,13 +73,12 @@ public class Download : MonoBehaviour
             yield return uwr.SendWebRequest();
 
             double now = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0;
-            double elapsed = now - startTimestamp; // 0ms起点
+            double elapsed = now - startTimestamp;
 
             if (uwr.result == UnityWebRequest.Result.Success)
             {
                 byte[] data = uwr.downloadHandler.data;
-                // Debug.Log(data);
-                renderQueue.Enqueue((data, downloadIndex, elapsed)); // ← elapsed(ダウンロード時刻ms)も一緒に入れる！
+                renderQueue.Enqueue((data, downloadIndex, elapsed));
             }
             else
             {
@@ -77,15 +87,15 @@ public class Download : MonoBehaviour
 
             downloadIndex++;
 
-            // 初期バッファが充填されたら通知
             if (!initialBufferFilled && renderQueue.Count >= initialBufferSize)
             {
                 initialBufferFilled = true;
-                OnBufferReady?.Invoke(); // 初期バッファ完了を通知
+                OnBufferReady?.Invoke();
                 UnityEngine.Debug.Log("初期バッファが充填されました。レンダリングを開始してください。");
             }
         }
     }
+
 
     // private string GetFilePath(int fileNumber)
     // {
