@@ -9,6 +9,7 @@ using System.Linq;
 
 public class Download : MonoBehaviour
 {
+    private CameraLogger cameraLogger;
     private int gridX = 5;
     private int gridY = 5;
     private int gridZ = 5;
@@ -34,6 +35,7 @@ public class Download : MonoBehaviour
 
     void Start()
     {
+        cameraLogger = FindObjectOfType<CameraLogger>();
         // Stopwatchの起動（基準タイミング）
         startTimestamp = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0; // ms
         StartCoroutine(DownloadLoop());
@@ -88,6 +90,10 @@ public class Download : MonoBehaviour
                     UnityEngine.Debug.LogError($"[Download Error URL] {url}\n[Download Error] File: {downloadIndex}, Error: {uwr.error}");
                 }
 
+                if (cameraLogger != null)
+                {
+                    cameraLogger.currentViewFrame = downloadIndex;
+                }
                 downloadIndex++;
 
                 if (!initialBufferFilled && renderQueue.Count >= initialBufferSize)

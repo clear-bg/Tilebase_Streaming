@@ -9,12 +9,12 @@ public class CameraController : MonoBehaviour
     // 左ドラッグ：視点の移動（左右反転済み）
 
     // カメラの移動量
-    [SerializeField, Range(50.0f, 400.0f)]
-    private float _positionStep = 100.0f;
+    [SerializeField, Range(100.0f, 600.0f)]
+    private float _positionStep = 400.0f;
 
     // マウス感度
     [SerializeField, Range(30.0f, 300.0f)]
-    private float _mouseSensitive = 45.0f;
+    private float _mouseSensitive = 75.0f;
 
     // カメラのTransform
     private Transform _camTransform;
@@ -66,8 +66,8 @@ public class CameraController : MonoBehaviour
     {
         Vector3 campos = _camTransform.position;
 
-        if (Input.GetKey(KeyCode.D)) { campos += _camTransform.right * Time.deltaTime * _positionStep; }
-        if (Input.GetKey(KeyCode.A)) { campos -= _camTransform.right * Time.deltaTime * _positionStep; }
+        if (Input.GetKey(KeyCode.D)) { campos += _camTransform.right * Time.deltaTime * _positionStep * 1.3f; }
+        if (Input.GetKey(KeyCode.A)) { campos -= _camTransform.right * Time.deltaTime * _positionStep * 1.3f; }
         if (Input.GetKey(KeyCode.Space)) { campos += _camTransform.up * Time.deltaTime * _positionStep; }
         if (Input.GetKey(KeyCode.LeftShift)) { campos -= _camTransform.up * Time.deltaTime * _positionStep; }
         if (Input.GetKey(KeyCode.W)) { campos += _camTransform.forward * Time.deltaTime * _positionStep; }
