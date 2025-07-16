@@ -10,9 +10,9 @@ using System.Linq;
 public class Download : MonoBehaviour
 {
     private CameraLogger cameraLogger;
-    private int gridX = 5;
-    private int gridY = 5;
-    private int gridZ = 5;
+    public static int gridX = 5;
+    public static int gridY = 5;
+    public static int gridZ = 5;
 
     // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
     private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
