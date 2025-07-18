@@ -10,9 +10,11 @@ using System.Linq;
 public class Download : MonoBehaviour
 {
     private CameraLogger cameraLogger;
-    public static int gridX = 5;
-    public static int gridY = 5;
-    public static int gridZ = 5;
+    public static int gridX = 2;
+    public static int gridY = 3;
+    public static int gridZ = 2;
+    public static Vector3 globalMin = new Vector3(-1000f, -1000f, -1000f);  // 実際のPLY空間に合わせて
+    public static Vector3 globalMax = new Vector3(2000f, 2000f, 2000f);
 
     // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
     private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
