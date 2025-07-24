@@ -11,6 +11,23 @@ import glob
 
 def register_endpoints(app: FastAPI):
 
+    @app.get("/get_xml")
+    async def get_xml(frame: int, grid: str = "2_3_2"):
+        dataset = f"split_20_to_{grid}"
+        xml_path = os.path.join(
+            os.path.dirname(__file__), "get_file", dataset,
+            f"{frame:03d}", "tiles.xml"
+        )
+
+        if not os.path.exists(xml_path):
+            raise HTTPException(status_code=404, detail="XML file not found")
+
+        return FileResponse(
+            xml_path,
+            media_type= "application/xml",
+            filename = f"{frame:03d}.xml"
+        )
+
     @app.get("/get_file")
     async def get_file(dataset: str, frame: int, tiles: str, grid: str = "2_3_2"):
         try:

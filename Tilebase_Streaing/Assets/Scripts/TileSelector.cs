@@ -55,4 +55,24 @@ public static class TileSelector
 
         return visibleTiles;
     }
+
+    public static List<int> GetVisibleTilesFromXML(int frame, Vector3 origin, Vector3 direction)
+    {
+        List<int> visible = new List<int>();
+        var tiles = XmlTileLoader.LoadTileBounds(frame);
+
+        if (tiles == null) return visible;
+
+        Ray ray = new Ray(origin, direction.normalized);
+
+        foreach (var tile in tiles)
+        {
+            if (tile.bounds.IntersectRay(ray))
+            {
+                visible.Add(tile.index);
+            }
+        }
+
+        return visible;
+    }
 }

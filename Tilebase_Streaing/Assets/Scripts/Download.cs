@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
+using System.IO;
 
 
 public class Download : MonoBehaviour
@@ -17,8 +18,8 @@ public class Download : MonoBehaviour
     public static Vector3 globalMax = new Vector3(2000f, 2000f, 2000f);
 
     // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
-    private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
-    // private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
+    // private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
+    private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
     public int loopCount = -1;  // 再生回数。-1で無限ループ
 
@@ -38,9 +39,15 @@ public class Download : MonoBehaviour
     void Start()
     {
         cameraLogger = FindObjectOfType<CameraLogger>();
-        // Stopwatchの起動（基準タイミング）
-        startTimestamp = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0; // ms
+
         StartCoroutine(DownloadLoop());
+
+        StartCoroutine(DownloadAllXMLs(() =>
+        {
+            // Stopwatchの起動（基準タイミング）
+            startTimestamp = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0; // ms
+            StartCoroutine(DownloadLoop());
+        }));
     }
 
     IEnumerator DownloadLoop()
@@ -112,19 +119,51 @@ public class Download : MonoBehaviour
         UnityEngine.Debug.Log("全ループ再生が完了しました。");
     }
 
+    IEnumerator DownloadAllXMLs(System.Action onComplete)
+    {
+        string xmlFolder = Path.Combine(Application.dataPath, "XML");
+        if (!Directory.Exists(xmlFolder)) Directory.CreateDirectory(xmlFolder);
+
+        for (int i = 0; i < totalFrames; i++)
+        {
+            string gridParam = $"{gridX}_{gridY}_{gridZ}";
+            string url = $"http://localhost:8000/get_xml?frame={i}&grid={gridParam}";
+
+            UnityWebRequest uwr = UnityWebRequest.Get(url);
+            yield return uwr.SendWebRequest();
+
+            if (uwr.result == UnityWebRequest.Result.Success)
+            {
+                string savePath = Path.Combine(xmlFolder, $"{i:000}.xml");
+                System.IO.File.WriteAllBytes(savePath, uwr.downloadHandler.data);
+                UnityEngine.Debug.Log($"Saved XML {i:000}");
+            }
+            else
+            {
+                UnityEngine.Debug.LogError($"Failed to download XML for frame {i:100}: {uwr.error}");
+            }
+        }
+    }
+
 
     private List<int> GetRequestTileIndex(int frame)
     {
         // 強制的に 0〜124 の隣接タイルを返す
-        return Enumerable.Range(0, 72).ToList();
+        // return Enumerable.Range(0, 72).ToList();
+
+        Vector3 origin = Camera.main.transform.position;
+        Vector3 direction = Camera.main.transform.forward;
+        return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
     }
 
-    private List<int>[] tileSets = new List<int>[]
-    {
-        new List<int> {3, 5, 9, 11},              // tiles_1: 前面上側
-        new List<int> {1, 3, 7, 9},               // tiles_2: 前面下部
-        new List<int> {1, 3, 5},                  // tiles_3: 前面左
-        new List<int> {7, 9, 11},                 // tiles_4: 前面右
-        new List<int> {1, 3, 5, 7, 9, 11},        // tiles_5: 前面全て
-    };
+
+
+    // private List<int>[] tileSets = new List<int>[]
+    // {
+    //     new List<int> {3, 5, 9, 11},              // tiles_1: 前面上側
+    //     new List<int> {1, 3, 7, 9},               // tiles_2: 前面下部
+    //     new List<int> {1, 3, 5},                  // tiles_3: 前面左
+    //     new List<int> {7, 9, 11},                 // tiles_4: 前面右
+    //     new List<int> {1, 3, 5, 7, 9, 11},        // tiles_5: 前面全て
+    // };
 }
