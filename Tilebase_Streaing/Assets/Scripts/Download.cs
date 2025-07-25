@@ -197,7 +197,7 @@ public class Download : MonoBehaviour
         else
         {
             origin = cameraLogger.main.transform.position;
-            direction = camera.main.transform.forward;
+            direction = GetComponent<Camera>().main.transform.forward;
         }
 
         return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
