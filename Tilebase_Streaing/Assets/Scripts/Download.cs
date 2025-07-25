@@ -10,6 +10,8 @@ using System.IO;
 
 public class Download : MonoBehaviour
 {
+    public bool useCSVCameraLog = true;
+    private List<(Vector3 pos, Vector3 dir)> cameraLogList = new List<(Vector3, Vector3)>();
     private CameraLogger cameraLogger;
     public static int gridX = 2;
     public static int gridY = 3;
@@ -40,7 +42,7 @@ public class Download : MonoBehaviour
     {
         cameraLogger = FindObjectOfType<CameraLogger>();
 
-        StartCoroutine(DownloadLoop());
+        if (useCSVCameraLog) LoadCameraLogFromCSV();
 
         StartCoroutine(DownloadAllXMLs(() =>
         {
@@ -145,6 +147,37 @@ public class Download : MonoBehaviour
         }
     }
 
+    private void LoadCameraLogFromCSV()
+    {
+        string Path = Path.Combine(Application.dataPath, "Log", "camera_log.csv");
+
+        if (!File.Exists(Path))
+        {
+            UnityEngine.Debug.LogError($"カメラログCSVが見つかりません: {Path}");
+            return;
+        }
+
+        var lines = File.ReadAllLines(path).Skip(1); // ヘッダー除外
+        foreach (var line in lines)
+        {
+            var parts = line.Split(',');
+            if (parts.Length < 8) continue;
+
+            float px = float.Parse(parts[1]);
+            float py = float.Parse(parts[2]);
+            float pz = float.Parse(parts[3]);
+            float rx = float.Parse(parts[4]);
+            float ry = float.Parse(parts[5]);
+            float rz = float.Parse(parts[6]);
+
+            Vector3 pos = new Vector3(px, py, pz);
+            Vector3 dir = Quaternion.Euler(rx, ry, rz) * Vector3.forward;
+            cameraLogList.Add((pos, dir));
+        }
+
+        UnityEngine.Debug.Log($"カメラログ {cameraLogList.Count} フレーム分読み込み完了");
+    }
+
 
     private List<int> GetRequestTileIndex(int frame)
     {
@@ -153,6 +186,20 @@ public class Download : MonoBehaviour
 
         Vector3 origin = Camera.main.transform.position;
         Vector3 direction = Camera.main.transform.forward;
+        return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
+
+        Vector3 origin, direction;
+
+        if (useCSVCameraLog && frame < cameraLogList.Count)
+        {
+            (origin, direction) = cameraLogList[frame];
+        }
+        else
+        {
+            origin = cameraLogger.main.transform.position;
+            direction = camera.main.transform.forward;
+        }
+
         return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
     }
 
