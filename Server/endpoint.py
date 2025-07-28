@@ -71,7 +71,7 @@ def register_endpoints(app: FastAPI):
             for f in glob.glob(os.path.join(merged_dir, "*.ply")):
                 os.remove(f)
 
-        log_merge_time(frame, start, end, endpoint_name=log_filename)
+        # log_merge_time(frame, start, end, endpoint_name=log_filename)
 
         return FileResponse(
             merged_path,

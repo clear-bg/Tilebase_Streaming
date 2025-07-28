@@ -28,11 +28,16 @@ namespace Pcx
         {
             QualitySettings.vSyncCount = 0; // VSyncを無効化
             Application.targetFrameRate = 120; // 最大フレームレートを120FPSに設定
-            meshFilter = gameObject.AddComponent<MeshFilter>();
-            meshRenderer = gameObject.AddComponent<MeshRenderer>();
+            meshFilter = gameObject.GetComponent<MeshFilter>();
+            if (meshFilter == null) meshFilter = gameObject.AddComponent<MeshFilter>();
+
+            meshRenderer = gameObject.GetComponent<MeshRenderer>();
+            if (meshRenderer == null) meshRenderer = gameObject.AddComponent<MeshRenderer>();
+
             meshRenderer.sharedMaterial = importer.GetDefaultMaterial();
 
-            logPath = Path.Combine(Application.dataPath, "Log/log_rendering.csv");
+            // logPath = Path.Combine(Application.dataPath, "Log/log_rendering.csv");
+            logPath = null; // レンダリングログ無効化
             // ログファイルを初期化
             File.WriteAllText(logPath, "Frame,DownloadedTime(ms),RenderedTime(ms),RenderDelay(ms),FrameInterval(ms)\n", Encoding.UTF8);
 
@@ -129,6 +134,8 @@ namespace Pcx
 
         void ExportLogToCSV()
         {
+            if (string.IsNullOrEmpty(logPath)) return; // ← 追加：出力無効化
+
             var sb = new StringBuilder();
             sb.AppendLine("Frame,DownloadedTime(ms),RenderedTime(ms),RenderDelay(ms),FrameInterval(ms)");
             foreach (var log in logs)
