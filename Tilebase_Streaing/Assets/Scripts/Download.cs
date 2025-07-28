@@ -37,9 +37,12 @@ public class Download : MonoBehaviour
     public static double startTimestamp = -1; // stopwatch起点
 
     private System.Random random = new System.Random();
+    [SerializeField] private TextAsset cameraLogCSV;
 
     void Start()
     {
+        DeleteAllXMLFiles();
+
         cameraLogger = FindObjectOfType<CameraLogger>();
 
         if (useCSVCameraLog) LoadCameraLogFromCSV();
@@ -145,19 +148,19 @@ public class Download : MonoBehaviour
                 UnityEngine.Debug.LogError($"Failed to download XML for frame {i:100}: {uwr.error}");
             }
         }
+        onComplete?.Invoke();
     }
 
     private void LoadCameraLogFromCSV()
     {
-        string Path = Path.Combine(Application.dataPath, "Log", "camera_log.csv");
-
-        if (!File.Exists(Path))
+        if (cameraLogCSV == null)
         {
-            UnityEngine.Debug.LogError($"カメラログCSVが見つかりません: {Path}");
+            UnityEngine.Debug.LogError("cameraLogCSV が Inspector で設定されていません。");
             return;
         }
 
-        var lines = File.ReadAllLines(path).Skip(1); // ヘッダー除外
+        var lines = cameraLogCSV.text.Split('\n').Skip(1);
+
         foreach (var line in lines)
         {
             var parts = line.Split(',');
@@ -184,10 +187,6 @@ public class Download : MonoBehaviour
         // 強制的に 0〜124 の隣接タイルを返す
         // return Enumerable.Range(0, 72).ToList();
 
-        Vector3 origin = Camera.main.transform.position;
-        Vector3 direction = Camera.main.transform.forward;
-        return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
-
         Vector3 origin, direction;
 
         if (useCSVCameraLog && frame < cameraLogList.Count)
@@ -196,11 +195,61 @@ public class Download : MonoBehaviour
         }
         else
         {
-            origin = cameraLogger.main.transform.position;
-            direction = GetComponent<Camera>().main.transform.forward;
+            origin = Camera.main.transform.position;
+            direction = Camera.main.transform.forward;
         }
 
         return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
+    }
+
+    void OnApplicationQuit()
+    {
+        // XMLファイルの削除
+        string xmlFolder = Path.Combine(Application.dataPath, "XML");
+
+        if (Directory.Exists(xmlFolder))
+        {
+            string[] xmlFiles = Directory.GetFiles(xmlFolder, "*.xml");
+
+            foreach (string file in xmlFiles)
+            {
+                try
+                {
+                    File.Delete(file);
+                    UnityEngine.Debug.Log($"削除: {file}");
+                }
+                catch (IOException e)
+                {
+                    UnityEngine.Debug.LogError($"XMLファイル削除エラー: {file}, {e.Message}");
+                }
+            }
+
+            UnityEngine.Debug.Log("XMLファイルの削除完了");
+        }
+    }
+
+    private void DeleteAllXMLFiles()
+    {
+        string xmlFolder = Path.Combine(Application.dataPath, "XML");
+
+        if (!Directory.Exists(xmlFolder)) return;
+
+        string[] xmlFiles = Directory.GetFiles(xmlFolder, "*.xml");
+
+        foreach (string file in xmlFiles)
+        {
+            try
+            {
+                File.Delete(file);
+                UnityEngine.Debug.Log($"再生前に削除: {file}");
+            }
+            catch (IOException e)
+            {
+                UnityEngine.Debug.LogError($"XML削除エラー: {file}, {e.Message}");
+            }
+        }
+
+        UnityEngine.Debug.Log("再生前のXMLファイル削除完了");
     }
 
 
