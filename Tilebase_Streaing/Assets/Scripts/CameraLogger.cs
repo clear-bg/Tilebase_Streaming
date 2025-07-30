@@ -30,7 +30,7 @@ public class CameraLogger : MonoBehaviour
         if (loggingCoroutine != null)
         {
             StopCoroutine(loggingCoroutine);
-            SaveCSV();
+            if (Download.logEnabled) SaveCSV();
             Debug.Log("Camera logging stopped and saved.");
         }
     }

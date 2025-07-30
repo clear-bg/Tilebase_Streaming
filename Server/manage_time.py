@@ -1,5 +1,6 @@
 import csv
 import os
+from config import CSV_LOG_ENABLED
 
 written_files = set()
 
@@ -26,3 +27,7 @@ def log_merge_time(frame: int, start: float, end: float, endpoint_name: str = "d
         if write_header:
             writer.writerow(["Frame", "MergeStartTime(ms)", "MergeEndTime(ms)", "Elapsed(ms)"])
         writer.writerow([frame, f"{start_ms:.3f}", f"{end_ms:.3f}", f"{duration:.3f}"])
+
+def log_merge_time(frame: int, start: float, end: float, endpoint_name: str = "default"):
+    if not CSV_LOG_ENABLED:
+        return

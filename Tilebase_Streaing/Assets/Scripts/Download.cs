@@ -11,15 +11,17 @@ using System.IO;
 public class Download : MonoBehaviour
 {
     private CameraLogger cameraLogger;
+    // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
+    // private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
+    private string baseUrl = "http://localhost:8000/get_file";
+    public static bool logEnabled = false;
     public static int gridX = 2;
     public static int gridY = 3;
     public static int gridZ = 2;
     public static Vector3 globalMin = new Vector3(-1000f, -1000f, -1000f);  // 実際のPLY空間に合わせて
     public static Vector3 globalMax = new Vector3(2000f, 2000f, 2000f);
 
-    // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
-    // private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
-    private string baseUrl = "http://localhost:8000/get_file";                 // タイル分割ありでリクエスト
+    // タイル分割ありでリクエスト
     public static ConcurrentQueue<(byte[], int, double)> renderQueue = new ConcurrentQueue<(byte[], int, double)>();
     public int loopCount = -1;  // 再生回数。-1で無限ループ
 

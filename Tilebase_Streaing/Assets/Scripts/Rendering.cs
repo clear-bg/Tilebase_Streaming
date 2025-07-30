@@ -34,7 +34,7 @@ namespace Pcx
 
             logPath = Path.Combine(Application.dataPath, "Log/log_rendering.csv");
             // ログファイルを初期化
-            File.WriteAllText(logPath, "Frame,DownloadedTime(ms),RenderedTime(ms),RenderDelay(ms),FrameInterval(ms)\n", Encoding.UTF8);
+            if (Download.logEnabled) File.WriteAllText(logPath, "Frame,DownloadedTime(ms),RenderedTime(ms),RenderDelay(ms),FrameInterval(ms)\n", Encoding.UTF8);
 
             // 初期バッファ充填完了を受け取る
             Download.OnBufferReady += EnableRendering;
@@ -118,13 +118,13 @@ namespace Pcx
             float avgFps = sum / fpsRecords.Count;
 
             Debug.Log($"平均FPS: {1f / fpsRecords.Average():F2}");
-            ExportLogToCSV();
+            if (Download.logEnabled) ExportLogToCSV();
         }
         void OnDisable()
         {
             Download.OnBufferReady -= EnableRendering;
             Download.renderQueue = new System.Collections.Concurrent.ConcurrentQueue<(byte[], int, double)>();
-            ExportLogToCSV();
+            if (Download.logEnabled) ExportLogToCSV();
         }
 
         void ExportLogToCSV()
