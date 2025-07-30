@@ -40,16 +40,17 @@ public class Download : MonoBehaviour
 
     void Start()
     {
+        DownloadUtility.DeleteAllXmlFiles();
+
         cameraLogger = FindObjectOfType<CameraLogger>();
 
-        StartCoroutine(DownloadLoop());
+        StartCoroutine(DownloadAllXMLs(OnXmlDownloadComplete));
+    }
 
-        StartCoroutine(DownloadAllXMLs(() =>
-        {
-            // Stopwatchの起動（基準タイミング）
-            startTimestamp = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0; // ms
-            StartCoroutine(DownloadLoop());
-        }));
+    private void OnXmlDownloadComplete()
+    {
+        startTimestamp = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0;
+        StartCoroutine(DownloadLoop());
     }
 
     IEnumerator DownloadLoop()
@@ -145,6 +146,9 @@ public class Download : MonoBehaviour
                 UnityEngine.Debug.LogError($"Failed to download XML for frame {i:100}: {uwr.error}");
             }
         }
+
+        UnityEngine.Debug.Log("[DownloadAllXMLs] 完了: onComplete()を呼び出します");
+        onComplete?.Invoke();
     }
 
 
@@ -157,15 +161,20 @@ public class Download : MonoBehaviour
         Vector3 direction = Camera.main.transform.forward;
         return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
     }
+}
 
-
-
-    // private List<int>[] tileSets = new List<int>[]
-    // {
-    //     new List<int> {3, 5, 9, 11},              // tiles_1: 前面上側
-    //     new List<int> {1, 3, 7, 9},               // tiles_2: 前面下部
-    //     new List<int> {1, 3, 5},                  // tiles_3: 前面左
-    //     new List<int> {7, 9, 11},                 // tiles_4: 前面右
-    //     new List<int> {1, 3, 5, 7, 9, 11},        // tiles_5: 前面全て
-    // };
+public static class DownloadUtility
+{
+    public static void DeleteAllXmlFiles()
+    {
+        string xmlFolder = Path.Combine(Application.dataPath, "XML");
+        if (Directory.Exists(xmlFolder))
+        {
+            foreach (string file in Directory.GetFiles(xmlFolder, "*.xml"))
+            {
+                File.Delete(file);
+            }
+            UnityEngine.Debug.Log("XMLファイルを削除しました。");
+        }
+    }
 }
