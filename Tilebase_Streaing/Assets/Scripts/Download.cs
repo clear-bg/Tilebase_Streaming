@@ -18,6 +18,8 @@ public class Download : MonoBehaviour
     public static int gridX = 2;
     public static int gridY = 3;
     public static int gridZ = 2;
+    public static float horizontalFov = 43f;
+    public static float verticalFov = 29f;
     public static Vector3 globalMin = new Vector3(-1000f, -1000f, -1000f);  // 実際のPLY空間に合わせて
     public static Vector3 globalMax = new Vector3(2000f, 2000f, 2000f);
 
@@ -158,13 +160,14 @@ public class Download : MonoBehaviour
         if (gaze == null)
         {
             UnityEngine.Debug.LogError("[GazeController] が見つかりません。シーンに追加されていますか？");
-            return new List<int>(); // ← 空のリストなど適切なreturnを必ず入れる
+            return new List<int>();
         }
 
         gaze.SetFrame(frame);
         Vector3 origin = gaze.CurrentPosition;
-        Vector3 direction = gaze.CurrentForward;
-        return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
+        Quaternion rotation = gaze.CurrentRotation; // ← FoVでは回転情報が必要
+
+        return TileSelector.GetVisibleTilesFromXML(frame, origin, rotation);
     }
 }
 

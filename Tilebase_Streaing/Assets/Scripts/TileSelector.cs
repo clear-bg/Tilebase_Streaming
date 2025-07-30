@@ -56,18 +56,26 @@ public static class TileSelector
         return visibleTiles;
     }
 
-    public static List<int> GetVisibleTilesFromXML(int frame, Vector3 origin, Vector3 direction)
+    public static List<int> GetVisibleTilesFromXML(int frame, Vector3 origin, Quaternion rotation)
     {
         List<int> visible = new List<int>();
         var tiles = XmlTileLoader.LoadTileBounds(frame);
-
         if (tiles == null) return visible;
 
-        Ray ray = new Ray(origin, direction.normalized);
+        float horizontalFov = Download.horizontalFov;
+        float verticalFov = Download.verticalFov;
+
+        float aspectRatio = Mathf.Tan(horizontalFov * 0.5f * Mathf.Deg2Rad) / Mathf.Tan(verticalFov * 0.5f * Mathf.Deg2Rad);
+
+        Matrix4x4 projMatrix = Matrix4x4.Perspective(verticalFov, aspectRatio, 0.01f, 10000f);
+        Matrix4x4 viewMatrix = Matrix4x4.TRS(origin, rotation, Vector3.one).inverse;
+        Matrix4x4 vpMatrix = projMatrix * viewMatrix;
+
+        Plane[] planes = GeometryUtility.CalculateFrustumPlanes(vpMatrix);
 
         foreach (var tile in tiles)
         {
-            if (tile.bounds.IntersectRay(ray))
+            if (GeometryUtility.TestPlanesAABB(planes, tile.bounds))
             {
                 visible.Add(tile.index);
             }

@@ -16,6 +16,9 @@ public class GazeController : MonoBehaviour
         ? Quaternion.Euler(rotations[currentFrame]) * Vector3.forward
         : Vector3.forward;
 
+    public Quaternion CurrentRotation => positions.Count > currentFrame
+        ? Quaternion.Euler(rotations[currentFrame])
+        : Quaternion.identity;
     void Awake()
     {
         LoadCSV();
