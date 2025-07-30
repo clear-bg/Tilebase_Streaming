@@ -154,11 +154,16 @@ public class Download : MonoBehaviour
 
     private List<int> GetRequestTileIndex(int frame)
     {
-        // 強制的に 0〜124 の隣接タイルを返す
-        // return Enumerable.Range(0, 72).ToList();
+        GazeController gaze = FindObjectOfType<GazeController>();
+        if (gaze == null)
+        {
+            UnityEngine.Debug.LogError("[GazeController] が見つかりません。シーンに追加されていますか？");
+            return new List<int>(); // ← 空のリストなど適切なreturnを必ず入れる
+        }
 
-        Vector3 origin = Camera.main.transform.position;
-        Vector3 direction = Camera.main.transform.forward;
+        gaze.SetFrame(frame);
+        Vector3 origin = gaze.CurrentPosition;
+        Vector3 direction = gaze.CurrentForward;
         return TileSelector.GetVisibleTilesFromXML(frame, origin, direction);
     }
 }
