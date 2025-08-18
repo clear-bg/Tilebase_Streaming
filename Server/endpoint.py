@@ -4,6 +4,7 @@ from tile_index import get_index_list
 from manage_time import log_merge_time
 from merge_ply import merge_ply_files
 from utils import get_tile_file_paths
+from manage_time import log_merge_time_for_request
 import os
 import time
 from os.path import exists
@@ -35,6 +36,22 @@ def register_endpoints(app: FastAPI):
             gx, gy, gz = map(int, grid.split("_"))
         except Exception:
             raise HTTPException(status_code=400, detail="Invalid parameters")
+
+        # ★ ここから追記: 受信リクエストのログ出力
+        log_dir = os.path.join(os.path.dirname(__file__), "merge_logs")
+        os.makedirs(log_dir, exist_ok=True)
+        req_log = os.path.join(log_dir, f"requests_{grid}.csv")
+
+        # frame==0 の時だけ、このグリッドのログをリセット
+        if frame == 0 and os.path.exists(req_log):
+            os.remove(req_log)
+
+        # 追記（ヘッダは存在しなければ書く）
+        write_header = not os.path.exists(req_log)
+        with open(req_log, "a", encoding="utf-8") as f:
+            if write_header:
+                f.write("frame,dataset,grid,tile_count,tiles\n")
+            f.write(f"{frame},{dataset},{grid},{len(tile_index)},\"{','.join(map(str, tile_index))}\"\n")
 
         index2xyz = get_index_list(gx, gy, gz)
         if any(idx < 0 or idx >= len(index2xyz) for idx in tile_index):
@@ -71,7 +88,7 @@ def register_endpoints(app: FastAPI):
             for f in glob.glob(os.path.join(merged_dir, "*.ply")):
                 os.remove(f)
 
-        log_merge_time(frame, start, end, endpoint_name=log_filename)
+        log_merge_time_for_request(frame, start, end, endpoint_name=log_filename)
 
         return FileResponse(
             merged_path,

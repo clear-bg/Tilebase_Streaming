@@ -42,7 +42,7 @@ public class Download : MonoBehaviour
 
     void Start()
     {
-        DownloadUtility.DeleteAllXmlFiles();
+        // DownloadUtility.DeleteAllXmlFiles();
 
         cameraLogger = FindObjectOfType<CameraLogger>();
 

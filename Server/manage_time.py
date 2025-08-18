@@ -1,6 +1,7 @@
 import csv
 import os
 from config import CSV_LOG_ENABLED
+import os, csv, time
 
 written_files = set()
 
@@ -31,3 +32,17 @@ def log_merge_time(frame: int, start: float, end: float, endpoint_name: str = "d
 def log_merge_time(frame: int, start: float, end: float, endpoint_name: str = "default"):
     if not CSV_LOG_ENABLED:
         return
+
+def log_merge_time_for_request(frame: int, start: float, end: float, endpoint_name: str = "merge_only"):
+    """merge処理専用のCSVロガー（CSV_LOG_ENABLEDには依存しない）"""
+    csv_dir = os.path.join(os.path.dirname(__file__), "merge_logs")
+    os.makedirs(csv_dir, exist_ok=True)
+
+    out_path = os.path.join(csv_dir, f"merge_time_{endpoint_name}.csv")
+    write_header = not os.path.exists(out_path)
+
+    with open(out_path, "a", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        if write_header:
+            w.writerow(["frame", "start", "end", "elapsed_ms"])
+        w.writerow([frame, start, end, (end - start) * 1000.0])

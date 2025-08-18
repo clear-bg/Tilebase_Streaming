@@ -120,7 +120,7 @@ namespace Pcx
             Debug.Log($"平均FPS: {1f / fpsRecords.Average():F2}");
             if (Download.logEnabled) ExportLogToCSV();
 
-            DownloadUtility.DeleteAllXmlFiles();
+            // DownloadUtility.DeleteAllXmlFiles();
         }
         void OnDisable()
         {
