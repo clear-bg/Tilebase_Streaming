@@ -173,8 +173,15 @@ public class Download : MonoBehaviour
 
 public static class DownloadUtility
 {
+    public static bool AutoDeleteXML = false;
     public static void DeleteAllXmlFiles()
     {
+        if (!AutoDeleteXML)
+        {
+            UnityEngine.Debug.Log("XMLファイル削除をスキップしました。");
+            return;
+        }
+
         string xmlFolder = Path.Combine(Application.dataPath, "XML");
         if (Directory.Exists(xmlFolder))
         {
