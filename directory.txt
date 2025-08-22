@@ -3,7 +3,9 @@ Streming/
 ├── .gitignore
 ├── directory.txt
 ├── Server/
+│   ├── __init__.py
 │   ├── app.py
+│   ├── config.py
 │   ├── endpoint.py
 │   ├── manage_time.py
 │   ├── merge_ply.py
@@ -27,6 +29,9 @@ Streming/
 │   │   └── *.ply                  # 000.ply~299.ply
 │   └── merge_logs/
 │       └── *.csv                  # csv logs
+│   └── test_scripts/
+│       ├──requests_20250822_153908.csv
+│       └── test_merge_from_csv.py
 ├── Tile_distribute/
 │   ├── split_ply.py
 │   ├── output.csv
@@ -35,8 +40,18 @@ Streming/
 └── Tilebase_Streaming/ (Unityプロジェクト)
     └── Assets/
         ├── Scripts/
-        │   ├── Download.cs
-        │   ├── Rendering.cs
-        │   ├── PointCloudImporter.cs
-        │   └── CameraController.cs
+        │   ├── Download.cs             # XMLとPLYのダウンロード＆フレーム制御
+        │   ├── Rendering.cs            # PLYデータをMeshとして描画し、FPSや描画遅延を記録
+        │   ├── PointCloudImporter.cs   # PcxライブラリのPLYインポート処理（PlyImporterなど）
+        │   ├── CameraController.cs     # カメラ制御
+        │   ├── CameraLogger.cs         # カメラの位置・回転をCSVに記録（視線情報の取得元）
+        │   ├── CheckFrustum.cs         # 視錐台とAABBの交差判定
+        │   ├── GazeController.cs       # カメラログCSVをもとに視線位置・方向を再現
+        │   ├── TileRequestLogger.cs    # タイル要求ログ（フレームとタイルIDのCSV）を記録
+        │   ├── TileSelector.cs         # XMLから読み込んだタイル境界と視錐台の交差による可視タイル選別
+        │   └── XmlTileLoader.cs        # XMLファイルからタイルのAABB情報を読み込む
+        ├── XML/
+        │   └── *.xml
+        ├── Log/
+        │   └── *.csv
         └── Pcx/
