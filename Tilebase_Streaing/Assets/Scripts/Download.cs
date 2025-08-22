@@ -14,7 +14,7 @@ public class Download : MonoBehaviour
     // private string baseUrl = "http://localhost:8000/merge_ply";             // マージ済みファイルリクエスト
     // private string baseUrl = "http://localhost:8000/Original_ply_20";       // オリジナル点群ファイルリクエスト
     private string baseUrl = "http://localhost:8000/get_file";
-    public static bool logEnabled = false;
+    public static bool logEnabled = true;
     public static int gridX = 2;
     public static int gridY = 3;
     public static int gridZ = 2;
@@ -44,6 +44,7 @@ public class Download : MonoBehaviour
     {
         DownloadUtility.DeleteAllXmlFiles();
 
+        TileRequestLogger.Enabled = true;
         cameraLogger = FindObjectOfType<CameraLogger>();
 
         StartCoroutine(DownloadAllXMLs(OnXmlDownloadComplete));
@@ -52,6 +53,9 @@ public class Download : MonoBehaviour
     private void OnXmlDownloadComplete()
     {
         startTimestamp = Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency * 1000.0;
+
+        TileRequestLogger.Begin();
+
         StartCoroutine(DownloadLoop());
     }
 
@@ -72,6 +76,9 @@ public class Download : MonoBehaviour
                 if (baseName.Contains("get_file"))
                 {
                     List<int> tileIndex = GetRequestTileIndex(downloadIndex);
+
+                    if (logEnabled) TileRequestLogger.LogTiles(downloadIndex, tileIndex);
+
                     string tileParam = string.Join(",", tileIndex);
                     string gridParam = $"{gridX}_{gridY}_{gridZ}";
                     string dataset = $"split_20_to_{gridParam}";
