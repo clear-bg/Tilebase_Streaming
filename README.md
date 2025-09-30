@@ -7,62 +7,13 @@ Python (FastAPI) を用いて点群ファイルリクエストを処理し、Uni
 
 ## ディレクトリ構造
 
-```
-Streming/
-├── README.md
-├── .gitignore
-├── directory.txt
-├── Server/
-│   ├── __init__.py
-│   ├── app.py
-│   ├── config.py
-│   ├── endpoint.py
-│   ├── manage_time.py
-│   ├── merge_ply.py
-│   ├── tile_index.py
-│   ├── utils.py
-│   ├── get_file/
-│   │   ├── split_20_to_2_3_2/
-│   │   │   ├── 000/
-│   │   │   │    ├── tile_0_0_0.ply
-│   │   │   │    ├── ...
-│   │   │   │    ├── tile_1_2_1.ply
-│   │   │   │    └── tiles.xml
-│   │   │   ├── 001/
-│   │   │   ├── ...
-│   │   │   └── 299/
-│   │   └── split_20_to_5_5_5/
-│   │       └── *.ply              # into plyfile as same as 2x3x2
-│   ├── Original_ply_20/
-│   │   └── *.ply                  # 000.ply~299.ply
-│   ├── merge_ply/
-│   │   └── *.ply                  # 000.ply~299.ply
-│   └── merge_logs/
-│       └── *.csv                  # csv logs
-│   └── test_scripts/
-│       ├──requests_20250822_153908.csv
-│       └── test_merge_from_csv.py
-├── Tile_distribute/
-│   ├── split_ply.py
-│   ├── output.csv
-│   └── Original_ply_20/
-│       └── *.ply                  # 000.ply~299.ply
-└── Tilebase_Streaming/            # Unityプロジェクト
-    └── Assets/
-        ├── Scripts/
-        │   ├── Download.cs             # XMLとPLYのダウンロード＆フレーム制御
-        │   ├── Rendering.cs            # PLYデータをMeshとして描画し、FPSや描画遅延を記録
-        │   ├── PointCloudImporter.cs   # PcxライブラリのPLYインポート処理（PlyImporterなど）
-        │   ├── CameraController.cs     # カメラ制御
-        │   ├── CameraLogger.cs         # カメラの位置・回転をCSVに記録（視線情報の取得元）
-        │   ├── CheckFrustum.cs         # 視錐台とAABBの交差判定
-        │   ├── GazeController.cs       # カメラログCSVをもとに視線位置・方向を再現
-        │   ├── TileRequestLogger.cs    # タイル要求ログ（フレームとタイルIDのCSV）を記録
-        │   ├── TileSelector.cs         # XMLから読み込んだタイル境界と視錐台の交差による可視タイル選別
-        │   └── XmlTileLoader.cs        # XMLファイルからタイルのAABB情報を読み込む
-        ├── XML/
-        │   └── *.xml
-        ├── Log/
-        │   └── *.csv
-        └── Pcx/
-```
+このプロジェクトは、主に以下の3つの要素で構成されています。
+
+-   **/Tile_distribute**: **データ前処理用スクリプト**
+    -   ここには、巨大な点群ファイル（PLY形式）をサーバーで扱いやすいように小さな「タイル」に分割するためのPythonスクリプトが格納されています。
+
+-   **/Server**: **配信用APIサーバー**
+    -   分割されたタイルデータをクライアント（Unity）に配信するための、Python（FastAPI）で書かれたサーバーのコードです。配信するタイルデータもこの中に配置します。
+
+-   **/Tilebase_Streaming**: **Unityクライアント**
+    -   点群データをリアルタイムで受信し、3D空間に描画するためのUnityプロジェクトです。主要なプログラムは `Assets/Scripts` 内にあります。
